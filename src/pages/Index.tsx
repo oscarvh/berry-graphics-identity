@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Mail, ArrowUpRight } from "lucide-react";
+import { Mail, ArrowUpRight, ChevronDown } from "lucide-react";
 
+/* ── scroll-reveal hook ── */
 const useScrollReveal = (delay = 0) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -8,7 +9,6 @@ const useScrollReveal = (delay = 0) => {
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting) {
@@ -18,7 +18,6 @@ const useScrollReveal = (delay = 0) => {
       },
       { threshold: 0.15 }
     );
-
     observer.observe(el);
     return () => observer.disconnect();
   }, [delay]);
@@ -26,153 +25,229 @@ const useScrollReveal = (delay = 0) => {
   return { ref, visible };
 };
 
-const revealClass = (visible: boolean) =>
+const reveal = (visible: boolean) =>
   `transition-all duration-1000 ease-out ${
     visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
   }`;
 
+/* ── page ── */
 const Index = () => {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const hero = useScrollReveal();
-  const mission = useScrollReveal(100);
-  const pillars = useScrollReveal(100);
-  const diff = useScrollReveal(100);
+  const services = useScrollReveal(100);
+  const manifesto = useScrollReveal(100);
+  const process = useScrollReveal(100);
   const cta = useScrollReveal(100);
-  const contact = useScrollReveal(100);
 
   return (
-    <main className="min-h-screen flex flex-col">
-      {/* Hero */}
-      <section
-        ref={hero.ref}
-        className={`flex flex-col items-center justify-center text-center min-h-screen px-6 ${revealClass(hero.visible)}`}
+    <>
+      {/* ── NAV ── */}
+      <nav
+        className={`fixed top-0 inset-x-0 z-50 flex items-center justify-between px-8 md:px-16 py-5 transition-all duration-500 ${
+          scrolled
+            ? "bg-background/95 backdrop-blur shadow-sm"
+            : "bg-transparent"
+        }`}
       >
-        <h1 className="text-7xl md:text-9xl font-light tracking-tight text-primary leading-none">
+        <span className="text-xl font-semibold tracking-tight text-primary">
           Berry
-        </h1>
-        <span className="mt-3 text-sm md:text-base font-normal tracking-[0.4em] uppercase text-muted-foreground">
-          Graphics
         </span>
-        <p className="mt-12 max-w-md text-base md:text-lg font-light text-muted-foreground leading-relaxed">
-          Diseño en comunicación visual
-          <br />y social media marketing
-        </p>
-        <div className="mt-16 w-8 h-[1px] bg-primary/30" />
-      </section>
+        <a
+          href="#contacto"
+          className="text-sm font-semibold tracking-wide text-foreground transition-colors duration-300 hover:text-secondary"
+        >
+          Contacto
+        </a>
+      </nav>
 
-      {/* Mission */}
-      <section
-        ref={mission.ref}
-        className={`px-6 py-24 md:py-32 flex justify-center ${revealClass(mission.visible)}`}
-      >
-        <div className="max-w-xl text-center">
-          <p className="text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-6">
-            Estudio boutique
-          </p>
-          <p className="text-lg md:text-xl font-light text-foreground leading-relaxed">
-            Elevamos la identidad visual de marcas que valoran la sofisticación
-            y el orden visual. Diseño silencioso, pero potente.
-          </p>
-        </div>
-      </section>
+      <main className="flex flex-col">
+        {/* ── HERO ── */}
+        <section
+          ref={hero.ref}
+          className={`relative min-h-screen flex items-center px-8 md:px-16 lg:px-24 ${reveal(hero.visible)}`}
+        >
+          <div className="flex gap-6 md:gap-8 items-stretch">
+            {/* vertical accent line */}
+            <div className="hidden md:block w-[3px] bg-primary rounded-full" />
 
-      {/* Pillars */}
-      <section
-        ref={pillars.ref}
-        className={`px-6 py-24 md:py-32 flex justify-center ${revealClass(pillars.visible)}`}
-      >
-        <div className="max-w-3xl w-full grid md:grid-cols-2 gap-16 md:gap-20">
-          <div className="text-center md:text-left">
-            <div className="w-10 h-[2px] bg-primary mb-6 mx-auto md:mx-0" />
-            <h2 className="text-xs font-semibold tracking-[0.25em] uppercase text-primary mb-4">
-              Comunicación Visual
-            </h2>
-            <p className="text-base font-light text-muted-foreground leading-relaxed">
-              Identidades gráficas, logotipos y sistemas visuales coherentes que
-              construyen marcas memorables.
-            </p>
+            <div className="flex flex-col justify-center text-center md:text-left">
+              <h1 className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-light leading-[0.95] tracking-tight">
+                <span className="text-foreground">Comunicación</span>
+                <br />
+                <span className="text-primary">Visual</span>
+              </h1>
+
+              <p className="mt-8 text-sm sm:text-base font-normal tracking-[0.25em] uppercase text-muted-foreground">
+                Diseño estratégico &amp; Social Media Marketing
+              </p>
+            </div>
           </div>
-          <div className="text-center md:text-left">
-            <div className="w-10 h-[2px] bg-primary mb-6 mx-auto md:mx-0" />
-            <h2 className="text-xs font-semibold tracking-[0.25em] uppercase text-primary mb-4">
-              Social Media
-            </h2>
-            <p className="text-base font-light text-muted-foreground leading-relaxed">
-              Estrategia y diseño de contenido para plataformas digitales con
-              estética de alto nivel.
-            </p>
-          </div>
-        </div>
-      </section>
 
-      {/* Differentiator */}
-      <section
-        ref={diff.ref}
-        className={`px-6 py-24 md:py-32 flex justify-center bg-muted/50 ${revealClass(diff.visible)}`}
-      >
-        <div className="max-w-lg text-center">
-          <p className="text-xs font-semibold tracking-[0.3em] uppercase text-primary mb-6">
-            Diferencial
-          </p>
-          <p className="text-lg md:text-xl font-light text-foreground leading-relaxed">
-            No saturamos. No explicamos de más.
-            <br />
-            <span className="text-primary font-normal">
-              La ejecución habla por sí misma.
+          {/* scroll indicator */}
+          <a
+            href="#servicios"
+            className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 text-muted-foreground/60 animate-bounce"
+          >
+            <ChevronDown className="w-5 h-5" />
+          </a>
+        </section>
+
+        {/* ── SERVICIOS ── */}
+        <section
+          id="servicios"
+          ref={services.ref}
+          className={`px-8 md:px-16 lg:px-24 py-28 md:py-36 ${reveal(services.visible)}`}
+        >
+          <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-20">
+            {/* 01 */}
+            <div>
+              <div className="w-12 h-[2px] bg-primary mb-8" />
+              <span className="block text-5xl font-light text-primary/20 mb-4">
+                01
+              </span>
+              <h2 className="text-lg font-semibold tracking-wide uppercase text-foreground mb-4">
+                Comunicación Visual
+              </h2>
+              <p className="text-base font-light text-muted-foreground leading-relaxed">
+                Identidades gráficas, logotipos y sistemas visuales coherentes
+                que construyen marcas memorables y atemporales.
+              </p>
+            </div>
+
+            {/* 02 */}
+            <div>
+              <div className="w-12 h-[2px] bg-primary mb-8" />
+              <span className="block text-5xl font-light text-primary/20 mb-4">
+                02
+              </span>
+              <h2 className="text-lg font-semibold tracking-wide uppercase text-foreground mb-4">
+                Social Media Marketing
+              </h2>
+              <p className="text-base font-light text-muted-foreground leading-relaxed">
+                Estrategia y diseño de contenido para plataformas digitales con
+                estética de alto nivel y propósito claro.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── MANIFIESTO ── */}
+        <section
+          ref={manifesto.ref}
+          className={`px-8 md:px-16 lg:px-24 py-28 md:py-36 bg-muted/40 ${reveal(manifesto.visible)}`}
+        >
+          <div className="max-w-3xl mx-auto text-center relative">
+            {/* decorative quote mark */}
+            <span className="absolute -top-10 left-1/2 -translate-x-1/2 text-[8rem] leading-none font-serif text-primary/10 select-none pointer-events-none">
+              &ldquo;
             </span>
-          </p>
-        </div>
-      </section>
 
-      {/* CTA */}
-      <section
-        ref={cta.ref}
-        className={`px-6 py-32 md:py-40 flex justify-center ${revealClass(cta.visible)}`}
-      >
-        <div className="text-center">
-          <p className="text-sm font-light text-muted-foreground mb-8 tracking-wide">
-            ¿Listo para elevar tu marca?
-          </p>
-          <a
-            href="mailto:hola@berrygraphics.com"
-            className="inline-flex items-center gap-3 px-8 py-3 border border-primary text-primary text-sm font-semibold tracking-[0.15em] uppercase transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
-          >
-            Trabajemos juntos
-            <ArrowUpRight className="w-4 h-4" />
-          </a>
-        </div>
-      </section>
+            <p className="text-3xl md:text-4xl lg:text-5xl font-light text-foreground leading-tight">
+              No decoramos.
+              <br />
+              <span className="text-primary">Comunicamos.</span>
+            </p>
+            <p className="mt-8 text-base md:text-lg font-light text-muted-foreground max-w-lg mx-auto leading-relaxed">
+              Cada pieza que creamos tiene un propósito estratégico detrás.
+              Diseño silencioso, pero potente.
+            </p>
+          </div>
+        </section>
 
-      {/* Contact */}
-      <section
-        ref={contact.ref}
-        className={`px-6 py-16 md:py-20 flex justify-center ${revealClass(contact.visible)}`}
-      >
-        <div className="flex flex-col md:flex-row items-center gap-6 md:gap-12">
-          <a
-            href="mailto:hola@berrygraphics.com"
-            className="inline-flex items-center gap-2 text-sm font-semibold text-foreground transition-colors duration-300 hover:text-secondary tracking-wide"
-          >
-            <Mail className="w-4 h-4" />
-            hola@berrygraphics.com
-          </a>
-          <a
-            href="https://instagram.com/berrygraphics"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-semibold text-foreground transition-colors duration-300 hover:text-secondary tracking-wide"
-          >
-            @berrygraphics
-          </a>
-        </div>
-      </section>
+        {/* ── PROCESO ── */}
+        <section
+          ref={process.ref}
+          className={`px-8 md:px-16 lg:px-24 py-28 md:py-36 ${reveal(process.visible)}`}
+        >
+          <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-0">
+            {[
+              {
+                num: "01",
+                title: "Estrategia",
+                desc: "Entendemos tu marca, tu audiencia y tus objetivos antes de diseñar.",
+              },
+              {
+                num: "02",
+                title: "Diseño",
+                desc: "Creamos piezas visuales con intención, coherencia y nivel profesional.",
+              },
+              {
+                num: "03",
+                title: "Impacto",
+                desc: "Medimos, ajustamos y elevamos tu presencia visual continuamente.",
+              },
+            ].map((step, i) => (
+              <div
+                key={step.num}
+                className={`text-center px-8 py-10 md:py-0 ${
+                  i < 2 ? "md:border-r md:border-border" : ""
+                }`}
+              >
+                <span className="block text-5xl font-light text-primary mb-4">
+                  {step.num}
+                </span>
+                <h3 className="text-sm font-semibold tracking-[0.2em] uppercase text-foreground mb-3">
+                  {step.title}
+                </h3>
+                <p className="text-sm font-light text-muted-foreground leading-relaxed max-w-[220px] mx-auto">
+                  {step.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
 
-      {/* Footer */}
-      <footer className="py-8 text-center">
-        <p className="text-xs font-normal text-muted-foreground tracking-wider">
-          Berry Graphics® — 2026
-        </p>
-      </footer>
-    </main>
+        {/* ── CTA ── */}
+        <section
+          id="contacto"
+          ref={cta.ref}
+          className={`px-8 md:px-16 lg:px-24 py-32 md:py-40 flex justify-center ${reveal(cta.visible)}`}
+        >
+          <div className="text-center">
+            <p className="text-2xl md:text-3xl font-light text-foreground mb-10">
+              Elevemos tu marca juntos
+            </p>
+            <a
+              href="mailto:hola@berrygraphics.com"
+              className="inline-flex items-center gap-3 px-10 py-3 border-2 border-primary text-primary text-sm font-semibold tracking-[0.15em] uppercase transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
+            >
+              Trabajemos juntos
+              <ArrowUpRight className="w-4 h-4" />
+            </a>
+            <a
+              href="mailto:hola@berrygraphics.com"
+              className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground transition-colors duration-300 hover:text-secondary"
+            >
+              <Mail className="w-4 h-4" />
+              hola@berrygraphics.com
+            </a>
+          </div>
+        </section>
+
+        {/* ── FOOTER ── */}
+        <footer className="border-t border-border">
+          <div className="max-w-5xl mx-auto px-8 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground tracking-wider">
+            <span>Berry Graphics®</span>
+            <a
+              href="https://instagram.com/berrygraphics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="transition-colors duration-300 hover:text-secondary"
+            >
+              @berrygraphics
+            </a>
+            <span>2026</span>
+          </div>
+        </footer>
+      </main>
+    </>
   );
 };
 
