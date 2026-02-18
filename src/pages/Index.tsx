@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Mail, ArrowUpRight, ChevronDown } from "lucide-react";
+import { Mail, ArrowUpRight, ChevronDown, Send } from "lucide-react";
 
 /* ── scroll-reveal hook ── */
 const useScrollReveal = (delay = 0) => {
@@ -56,8 +56,9 @@ const Index = () => {
             : "bg-transparent"
         }`}
       >
-        <span className="text-xl font-semibold tracking-tight text-primary">
-          Berry
+        <span className="text-2xl md:text-3xl font-light tracking-tight">
+          <span className="text-primary font-semibold">Berry</span>
+          <span className="text-muted-foreground font-light text-sm tracking-[0.3em] uppercase ml-2">Graphics</span>
         </span>
         <a
           href="#contacto"
@@ -208,26 +209,69 @@ const Index = () => {
         <section
           id="contacto"
           ref={cta.ref}
-          className={`px-8 md:px-16 lg:px-24 py-32 md:py-40 flex justify-center ${reveal(cta.visible)}`}
+          className={`px-8 md:px-16 lg:px-24 py-32 md:py-40 ${reveal(cta.visible)}`}
         >
-          <div className="text-center">
-            <p className="text-2xl md:text-3xl font-light text-foreground mb-10">
-              Elevemos tu marca juntos
-            </p>
-            <a
-              href="mailto:hola@berrygraphics.com"
-              className="inline-flex items-center gap-3 px-10 py-3 border-2 border-primary text-primary text-sm font-semibold tracking-[0.15em] uppercase transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
+          <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-16 md:gap-24 items-center">
+            {/* Left — heading */}
+            <div>
+              <p className="text-3xl md:text-4xl lg:text-5xl font-light text-foreground leading-tight">
+                Elevemos tu
+                <br />
+                <span className="text-primary">marca juntos</span>
+              </p>
+              <p className="mt-6 text-sm font-light text-muted-foreground leading-relaxed max-w-xs">
+                Cuéntanos sobre tu proyecto y te responderemos en menos de 24 horas.
+              </p>
+              <a
+                href="mailto:hola@berrygraphics.com"
+                className="mt-6 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors duration-300 hover:text-secondary"
+              >
+                <Mail className="w-4 h-4" />
+                hola@berrygraphics.com
+              </a>
+            </div>
+
+            {/* Right — form */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const form = e.target as HTMLFormElement;
+                const data = new FormData(form);
+                window.location.href = `mailto:hola@berrygraphics.com?subject=${encodeURIComponent(
+                  data.get("nombre") as string
+                )}&body=${encodeURIComponent(data.get("mensaje") as string)}`;
+              }}
+              className="flex flex-col gap-5"
             >
-              Trabajemos juntos
-              <ArrowUpRight className="w-4 h-4" />
-            </a>
-            <a
-              href="mailto:hola@berrygraphics.com"
-              className="mt-6 flex items-center justify-center gap-2 text-sm text-muted-foreground transition-colors duration-300 hover:text-secondary"
-            >
-              <Mail className="w-4 h-4" />
-              hola@berrygraphics.com
-            </a>
+              <input
+                name="nombre"
+                type="text"
+                required
+                placeholder="Tu nombre"
+                className="w-full bg-transparent border-b border-border py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-300"
+              />
+              <input
+                name="email"
+                type="email"
+                required
+                placeholder="tu@email.com"
+                className="w-full bg-transparent border-b border-border py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-300"
+              />
+              <textarea
+                name="mensaje"
+                required
+                rows={3}
+                placeholder="Cuéntanos sobre tu proyecto..."
+                className="w-full bg-transparent border-b border-border py-3 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary transition-colors duration-300 resize-none"
+              />
+              <button
+                type="submit"
+                className="mt-2 self-start inline-flex items-center gap-3 px-8 py-3 border-2 border-primary text-primary text-sm font-semibold tracking-[0.15em] uppercase transition-all duration-300 hover:bg-primary hover:text-primary-foreground"
+              >
+                Enviar
+                <Send className="w-4 h-4" />
+              </button>
+            </form>
           </div>
         </section>
 
