@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Mail, Instagram, ArrowRight, Zap, Eye, TrendingUp, Send, CheckCircle2 } from "lucide-react";
+import berryLogo from "@/assets/berry-logo.png";
 
 /* ── scroll-reveal hook ── */
 const useScrollReveal = (delay = 0) => {
@@ -25,12 +26,24 @@ const useScrollReveal = (delay = 0) => {
   return { ref, visible };
 };
 
-const reveal = (visible: boolean) =>
-  `transition-all duration-[1200ms] ease-out ${
-    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
-  }`;
+const reveal = (visible: boolean, delay = 0) =>
+  `transition-all ease-out ${
+    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+  }` +
+  ` duration-[1200ms]` +
+  (delay ? ` [transition-delay:${delay}ms]` : "");
 
-/* ── stat counter ── */
+/* ── staggered reveal for children ── */
+const stagger = (visible: boolean, index: number) => ({
+  className: `transition-all duration-[900ms] ease-out ${
+    visible
+      ? "opacity-100 translate-y-0 translate-x-0"
+      : "opacity-0 translate-y-6"
+  }`,
+  style: { transitionDelay: visible ? `${index * 150}ms` : "0ms" },
+});
+
+/* ── data ── */
 const stats = [
   { value: "150+", label: "Marcas potenciadas" },
   { value: "98%", label: "Clientes satisfechos" },
@@ -92,16 +105,19 @@ const Index = () => {
     <>
       {/* ── NAV ── */}
       <nav
-        className={`fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 lg:px-20 py-4 transition-all duration-500 ${
+        className={`fixed top-0 inset-x-0 z-50 flex items-center justify-between px-6 md:px-12 lg:px-20 py-3 transition-all duration-500 ${
           scrolled
             ? "bg-background/95 backdrop-blur-md shadow-sm"
             : "bg-transparent"
         }`}
       >
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-2xl font-semibold text-primary tracking-tight">Berry</span>
-          <span className="text-[11px] font-normal tracking-[0.35em] uppercase text-muted-foreground">Graphics</span>
-        </div>
+        <a href="#" className="flex items-center gap-2.5">
+          <img src={berryLogo} alt="Berry Graphics" className="w-8 h-8 object-contain" />
+          <div className="flex items-baseline gap-1">
+            <span className="text-2xl font-semibold text-primary tracking-tight">Berry</span>
+            <span className="text-[10px] font-normal tracking-[0.35em] uppercase text-muted-foreground">Graphics</span>
+          </div>
+        </a>
         <a
           href="#contacto"
           className="hidden sm:inline-flex items-center gap-2 px-5 py-2 bg-primary text-primary-foreground text-xs font-semibold tracking-widest uppercase transition-all duration-300 hover:bg-secondary"
@@ -115,19 +131,25 @@ const Index = () => {
         {/* ── HERO ── */}
         <section
           ref={hero.ref}
-          className={`relative min-h-screen flex items-center px-6 md:px-12 lg:px-20 ${reveal(hero.visible)}`}
+          className="relative min-h-screen flex items-center px-6 md:px-12 lg:px-20"
         >
           <div className="w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 lg:gap-20 items-center pt-20 lg:pt-0">
             {/* Left — copy */}
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 border border-primary/20 mb-8">
+              <div
+                {...stagger(hero.visible, 0)}
+                className={`inline-flex items-center gap-2 px-3 py-1 border border-primary/20 mb-8 ${stagger(hero.visible, 0).className}`}
+              >
                 <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
                 <span className="text-[11px] font-semibold tracking-widest uppercase text-primary">
                   Estudio de diseño
                 </span>
               </div>
 
-              <h1 className="text-[2.75rem] sm:text-6xl lg:text-7xl font-light leading-[1.05] tracking-tight">
+              <h1
+                {...stagger(hero.visible, 1)}
+                className={`text-[2.75rem] sm:text-6xl lg:text-7xl font-light leading-[1.05] tracking-tight ${stagger(hero.visible, 1).className}`}
+              >
                 Diseño que
                 <br />
                 <span className="text-primary font-normal">convierte</span>
@@ -135,11 +157,17 @@ const Index = () => {
                 <span className="text-muted-foreground/40 text-[0.6em]">audiencias en clientes</span>
               </h1>
 
-              <p className="mt-8 text-base font-normal text-muted-foreground leading-relaxed max-w-md">
+              <p
+                {...stagger(hero.visible, 2)}
+                className={`mt-8 text-base font-normal text-muted-foreground leading-relaxed max-w-md ${stagger(hero.visible, 2).className}`}
+              >
                 Comunicación visual y social media marketing estratégico para marcas que quieren crecer con identidad propia.
               </p>
 
-              <div className="mt-10 flex flex-col sm:flex-row gap-4">
+              <div
+                {...stagger(hero.visible, 3)}
+                className={`mt-10 flex flex-col sm:flex-row gap-4 ${stagger(hero.visible, 3).className}`}
+              >
                 <a
                   href="#contacto"
                   className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-primary text-primary-foreground text-sm font-semibold tracking-[0.15em] uppercase transition-all duration-300 hover:bg-secondary"
@@ -156,29 +184,43 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Right — visual block */}
-            <div className="hidden lg:flex flex-col items-end justify-center relative">
-              <div className="relative w-full max-w-md">
-                {/* Large decorative block */}
-                <div className="w-full aspect-[4/5] bg-muted/50 relative overflow-hidden">
-                  <div className="absolute inset-0 flex flex-col justify-end p-8">
-                    <div className="w-16 h-[3px] bg-primary mb-6" />
-                    <p className="text-xl font-light text-foreground leading-snug">
-                      Comunicación<br />visual<br />
-                      <span className="text-primary">estratégica</span>
-                    </p>
-                  </div>
-                  {/* Grid pattern */}
-                  <div className="absolute top-6 right-6 grid grid-cols-3 gap-2 opacity-20">
-                    {Array.from({ length: 9 }).map((_, i) => (
-                      <div key={i} className="w-3 h-3 bg-primary" />
-                    ))}
-                  </div>
+            {/* Right — logo visual block */}
+            <div
+              {...stagger(hero.visible, 2)}
+              className={`hidden lg:flex flex-col items-center justify-center relative ${stagger(hero.visible, 2).className}`}
+            >
+              <div className="relative w-full max-w-sm flex items-center justify-center">
+                {/* Logo grande como hero visual */}
+                <img
+                  src={berryLogo}
+                  alt="Berry Graphics"
+                  className="w-64 h-64 object-contain opacity-90"
+                />
+                {/* Floating accent elements */}
+                <div className="absolute -bottom-8 -left-8 w-32 h-32 border-2 border-primary/15 transition-all duration-[2000ms] ease-out"
+                  style={{ transform: hero.visible ? "translate(0,0)" : "translate(-20px,20px)", opacity: hero.visible ? 1 : 0 }}
+                />
+                <div className="absolute -top-6 -right-6 w-20 h-20 border-2 border-primary/10 transition-all duration-[2000ms] ease-out"
+                  style={{ transform: hero.visible ? "translate(0,0)" : "translate(20px,-20px)", opacity: hero.visible ? 1 : 0, transitionDelay: "300ms" }}
+                />
+                {/* Grid pattern */}
+                <div className="absolute top-0 right-0 grid grid-cols-3 gap-2 opacity-15 transition-opacity duration-[1500ms]"
+                  style={{ opacity: hero.visible ? 0.15 : 0, transitionDelay: "600ms" }}
+                >
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <div key={i} className="w-2.5 h-2.5 bg-primary" />
+                  ))}
                 </div>
-                {/* Floating accent */}
-                <div className="absolute -bottom-6 -left-6 w-32 h-32 border-2 border-primary/20" />
               </div>
             </div>
+          </div>
+
+          {/* Scroll indicator */}
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 transition-opacity duration-1000"
+            style={{ opacity: hero.visible ? 0.4 : 0, transitionDelay: "1200ms" }}
+          >
+            <span className="text-[10px] tracking-widest uppercase text-muted-foreground">Scroll</span>
+            <div className="w-px h-8 bg-primary/30 animate-pulse" />
           </div>
         </section>
 
@@ -188,8 +230,8 @@ const Index = () => {
           className={`px-6 md:px-12 lg:px-20 py-16 border-y border-border ${reveal(statsRef.visible)}`}
         >
           <div className="max-w-5xl mx-auto grid grid-cols-3 gap-8">
-            {stats.map((s) => (
-              <div key={s.label} className="text-center">
+            {stats.map((s, i) => (
+              <div key={s.label} {...stagger(statsRef.visible, i)} className={`text-center ${stagger(statsRef.visible, i).className}`}>
                 <span className="block text-3xl sm:text-4xl font-light text-primary">
                   {s.value}
                 </span>
@@ -223,11 +265,12 @@ const Index = () => {
               {services.map((svc, i) => (
                 <div
                   key={svc.title}
+                  {...stagger(servicesRef.visible, i)}
                   className={`p-8 lg:p-10 ${
                     i < 2 ? "md:border-r border-b md:border-b-0 border-border" : ""
-                  } group hover:bg-muted/30 transition-colors duration-500`}
+                  } group hover:bg-muted/30 transition-colors duration-500 ${stagger(servicesRef.visible, i).className}`}
                 >
-                  <svc.icon className="w-6 h-6 text-primary mb-6" strokeWidth={1.5} />
+                  <svc.icon className="w-6 h-6 text-primary mb-6 transition-transform duration-500 group-hover:scale-110" strokeWidth={1.5} />
                   <h3 className="text-lg font-semibold tracking-wide text-foreground mb-3">
                     {svc.title}
                   </h3>
@@ -276,10 +319,11 @@ const Index = () => {
                 { num: "02", text: "Identidad visual coherente" },
                 { num: "03", text: "Contenido que convierte" },
                 { num: "04", text: "Soporte continuo" },
-              ].map((item) => (
+              ].map((item, i) => (
                 <div
                   key={item.num}
-                  className="p-6 border border-background/10 hover:border-primary/40 transition-colors duration-300"
+                  {...stagger(resultsRef.visible, i)}
+                  className={`p-6 border border-background/10 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1 ${stagger(resultsRef.visible, i).className}`}
                 >
                   <span className="block text-2xl font-light text-primary mb-3">
                     {item.num}
@@ -380,7 +424,8 @@ const Index = () => {
         {/* ── FOOTER ── */}
         <footer className="border-t border-border">
           <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground tracking-wider">
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-center gap-2">
+              <img src={berryLogo} alt="Berry" className="w-5 h-5 object-contain" />
               <span className="font-semibold text-primary">Berry</span>
               <span className="tracking-[0.3em] uppercase">Graphics®</span>
             </div>
