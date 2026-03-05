@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Mail, Instagram, ArrowRight, Zap, Eye, TrendingUp, Send, CheckCircle2 } from "lucide-react";
-import berryLogo from "@/assets/berry-logo.png";
+import berryLogo from "@/assets/berry-logo.webp";
 
 /* ── scroll-reveal hook ── */
 const useScrollReveal = (delay = 0) => {
