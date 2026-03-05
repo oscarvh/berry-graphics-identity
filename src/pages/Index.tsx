@@ -294,19 +294,19 @@ const Index = () => {
         {/* ── RESULTADOS / DIFERENCIAL ── */}
         <section
           ref={resultsRef.ref}
-          className={`px-6 md:px-12 lg:px-20 py-24 md:py-32 bg-foreground ${reveal(resultsRef.visible)}`}
+          className={`px-6 md:px-12 lg:px-20 py-24 md:py-32 border-y border-border ${reveal(resultsRef.visible)}`}
         >
           <div className="max-w-5xl mx-auto grid md:grid-cols-2 gap-16 items-center">
             <div>
               <span className="text-[11px] font-semibold tracking-widest uppercase text-primary">
                 Por qué elegirnos
               </span>
-              <h2 className="mt-4 text-3xl sm:text-4xl font-light text-background leading-tight">
+              <h2 className="mt-4 text-3xl sm:text-4xl font-light text-foreground leading-tight">
                 No solo diseñamos.
                 <br />
                 <span className="text-primary">Generamos resultados.</span>
               </h2>
-              <p className="mt-6 text-base font-light text-background/60 leading-relaxed">
+              <p className="mt-6 text-base font-light text-muted-foreground leading-relaxed">
                 Cada pieza visual que creamos tiene un objetivo estratégico: 
                 posicionar tu marca, conectar con tu audiencia y convertir 
                 atención en oportunidades de negocio.
@@ -323,12 +323,12 @@ const Index = () => {
                 <div
                   key={item.num}
                   {...stagger(resultsRef.visible, i)}
-                  className={`p-6 border border-background/10 hover:border-primary/40 transition-all duration-300 hover:-translate-y-1 ${stagger(resultsRef.visible, i).className}`}
+                  className={`p-6 border border-border hover:border-primary/40 transition-all duration-300 hover:-translate-y-1 ${stagger(resultsRef.visible, i).className}`}
                 >
                   <span className="block text-2xl font-light text-primary mb-3">
                     {item.num}
                   </span>
-                  <p className="text-sm font-normal text-background/80 leading-snug">
+                  <p className="text-sm font-normal text-muted-foreground leading-snug">
                     {item.text}
                   </p>
                 </div>
