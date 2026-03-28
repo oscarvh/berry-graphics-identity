@@ -1,152 +1,229 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import berryLogo from "@/assets/berry-logo.webp";
 
-const useReveal = (delay = 0) => {
+/* ── Scroll-linked reveal ── */
+const useReveal = (threshold = 0.15) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
     const obs = new IntersectionObserver(
-      ([e]) => {
-        if (e.isIntersecting) {
-          setTimeout(() => setVisible(true), delay);
-          obs.disconnect();
-        }
-      },
-      { threshold: 0.1 }
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold }
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [delay]);
+  }, [threshold]);
   return { ref, visible };
 };
 
-const fade = (visible: boolean, delay = 0) => ({
-  className: `transition-all duration-[1400ms] ease-[cubic-bezier(0.16,1,0.3,1)] ${
-    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-5"
-  }`,
-  style: { transitionDelay: `${delay}ms` },
-});
+const anim = (visible: boolean, delay = 0) =>
+  `transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-7"
+  }` as const;
+
+const animStyle = (visible: boolean, delay = 0) =>
+  ({ transitionDelay: visible ? `${delay}ms` : "0ms" });
 
 const Index = () => {
-  const hero = useReveal();
-  const contact = useReveal(200);
+  const hero = useReveal(0.05);
+  const contact = useReveal(0.2);
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
-    const onScroll = () => setScrollY(window.scrollY);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    const fn = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      {/* ─── Hero ─── */}
+    <div className="min-h-screen bg-background overflow-x-hidden">
+
+      {/* ════════════════════════════ HERO ════════════════════════════ */}
       <section
         ref={hero.ref}
-        className="flex-1 flex flex-col items-center justify-center min-h-screen px-6 relative"
+        className="relative min-h-screen flex items-center justify-center px-6 md:px-16 lg:px-24"
       >
-        {/* Logo with subtle parallax */}
+        {/* Decorative frame — top-left */}
         <div
-          className="mb-12"
-          style={{ transform: `translateY(${scrollY * -0.08}px)` }}
-        >
-          <img
-            src={berryLogo}
-            alt="Berry Graphics"
-            {...fade(hero.visible, 0)}
-            className={`w-28 h-28 sm:w-36 sm:h-36 object-contain ${fade(hero.visible, 0).className}`}
-            style={fade(hero.visible, 0).style}
-          />
-        </div>
-
-        {/* Brand name */}
-        <div
-          {...fade(hero.visible, 300)}
-          className={`flex items-baseline gap-2 sm:gap-3 ${fade(hero.visible, 300).className}`}
-          style={fade(hero.visible, 300).style}
-        >
-          <span className="text-[2rem] sm:text-[2.75rem] font-light text-primary leading-none tracking-tight">
-            Berry
-          </span>
-          <span className="text-[9px] sm:text-[11px] font-normal tracking-[0.45em] uppercase text-muted-foreground leading-none">
-            Graphics
-          </span>
-        </div>
-
-        {/* Divider */}
-        <div
-          {...fade(hero.visible, 550)}
-          className={`mt-10 w-8 h-px bg-primary/30 ${fade(hero.visible, 550).className}`}
-          style={fade(hero.visible, 550).style}
-        />
-
-        {/* Tagline */}
-        <p
-          {...fade(hero.visible, 700)}
-          className={`mt-10 text-center text-[13px] sm:text-[14px] font-light text-muted-foreground leading-[1.8] tracking-wide max-w-xs sm:max-w-sm ${fade(hero.visible, 700).className}`}
-          style={fade(hero.visible, 700).style}
-        >
-          Diseño en comunicación visual
-          <br />
-          & social media marketing
-        </p>
-
-        {/* Scroll indicator */}
-        <div
-          className="absolute bottom-12 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3 transition-opacity duration-[2000ms]"
+          className="absolute top-12 left-8 md:left-16 lg:left-24 flex items-start gap-0 pointer-events-none"
           style={{
-            opacity: hero.visible ? 0.25 : 0,
-            transitionDelay: "1600ms",
+            opacity: hero.visible ? 0.15 : 0,
+            transition: "all 2400ms cubic-bezier(0.22,1,0.36,1)",
+            transitionDelay: hero.visible ? "800ms" : "0ms",
+            transform: hero.visible ? "translate(0,0)" : "translate(-12px,-12px)",
           }}
         >
-          <span className="text-[8px] tracking-[0.4em] uppercase text-muted-foreground/60">
-            Scroll
-          </span>
-          <div className="w-px h-8 bg-primary/20" />
+          <div className="w-16 h-px bg-primary" />
+          <div className="w-px h-16 bg-primary -mt-px" style={{ marginLeft: "-1px" }} />
+        </div>
+
+        {/* Decorative frame — bottom-right */}
+        <div
+          className="absolute bottom-12 right-8 md:right-16 lg:right-24 flex items-end pointer-events-none"
+          style={{
+            opacity: hero.visible ? 0.15 : 0,
+            transition: "all 2400ms cubic-bezier(0.22,1,0.36,1)",
+            transitionDelay: hero.visible ? "1000ms" : "0ms",
+            transform: hero.visible ? "translate(0,0)" : "translate(12px,12px)",
+          }}
+        >
+          <div className="flex flex-col items-end">
+            <div className="w-16 h-px bg-primary" />
+            <div className="w-px h-16 bg-primary" style={{ marginRight: "0px", marginTop: "-1px", alignSelf: "flex-end" }} />
+          </div>
+        </div>
+
+        {/* Main hero composition */}
+        <div className="relative flex flex-col items-center">
+          {/* Logo */}
+          <div
+            style={{
+              transform: `translateY(${scrollY * -0.06}px)`,
+            }}
+          >
+            <img
+              src={berryLogo}
+              alt="Berry Graphics"
+              className={`w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 object-contain ${anim(hero.visible, 0)}`}
+              style={animStyle(hero.visible, 0)}
+            />
+          </div>
+
+          {/* Brand */}
+          <div className="mt-14 flex flex-col items-center">
+            <h1
+              className={`text-[2.25rem] sm:text-[3rem] lg:text-[3.5rem] font-light text-primary leading-none tracking-[-0.02em] ${anim(hero.visible, 300)}`}
+              style={animStyle(hero.visible, 300)}
+            >
+              Berry
+            </h1>
+            <span
+              className={`mt-3 text-[10px] sm:text-[11px] font-normal tracking-[0.5em] uppercase text-muted-foreground ${anim(hero.visible, 450)}`}
+              style={animStyle(hero.visible, 450)}
+            >
+              Graphics
+            </span>
+          </div>
+
+          {/* Accent line */}
+          <div
+            className="mt-12 overflow-hidden"
+            style={{
+              opacity: hero.visible ? 1 : 0,
+              transition: "opacity 1200ms ease",
+              transitionDelay: hero.visible ? "700ms" : "0ms",
+            }}
+          >
+            <div
+              className="h-px bg-primary/25"
+              style={{
+                width: hero.visible ? "48px" : "0px",
+                transition: "width 1400ms cubic-bezier(0.22,1,0.36,1)",
+                transitionDelay: hero.visible ? "700ms" : "0ms",
+              }}
+            />
+          </div>
+
+          {/* Tagline */}
+          <p
+            className={`mt-12 text-center text-[13px] sm:text-[14px] font-light text-foreground leading-[2] tracking-[0.04em] ${anim(hero.visible, 700)}`}
+            style={animStyle(hero.visible, 700)}
+          >
+            Diseño en comunicación visual
+          </p>
+          <p
+            className={`text-center text-[13px] sm:text-[14px] font-light text-muted-foreground leading-[2] tracking-[0.04em] ${anim(hero.visible, 850)}`}
+            style={animStyle(hero.visible, 850)}
+          >
+            & social media marketing
+          </p>
+        </div>
+
+        {/* Scroll cue */}
+        <div
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center"
+          style={{
+            opacity: hero.visible ? 0.2 : 0,
+            transition: "opacity 2000ms ease",
+            transitionDelay: hero.visible ? "1800ms" : "0ms",
+          }}
+        >
+          <div className="w-px h-12 bg-primary/30" />
         </div>
       </section>
 
-      {/* ─── Contact ─── */}
+      {/* ════════════════════════════ CONTACT ════════════════════════════ */}
       <section
         ref={contact.ref}
-        className="flex flex-col items-center justify-center py-32 sm:py-40 px-6"
+        className="relative py-40 sm:py-48 px-6 md:px-16"
       >
-        <div
-          {...fade(contact.visible, 0)}
-          className={`w-6 h-px bg-primary/25 mb-14 ${fade(contact.visible, 0).className}`}
-          style={fade(contact.visible, 0).style}
-        />
+        {/* Top border accent */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-px h-20 bg-border" />
 
-        <div className="flex flex-col items-center gap-6">
-          <a
-            href="mailto:hola@berrygraphics.com"
-            {...fade(contact.visible, 150)}
-            className={`text-[13px] font-normal text-foreground tracking-wide hover:text-primary transition-colors duration-500 ${fade(contact.visible, 150).className}`}
-            style={fade(contact.visible, 150).style}
+        <div className="max-w-lg mx-auto flex flex-col items-center">
+          {/* Section accent */}
+          <div
+            className="overflow-hidden mb-16"
+            style={{
+              opacity: contact.visible ? 1 : 0,
+              transition: "opacity 1200ms ease",
+              transitionDelay: contact.visible ? "200ms" : "0ms",
+            }}
           >
-            hola@berrygraphics.com
-          </a>
+            <div
+              className="h-px bg-primary/20"
+              style={{
+                width: contact.visible ? "32px" : "0px",
+                transition: "width 1400ms cubic-bezier(0.22,1,0.36,1)",
+                transitionDelay: contact.visible ? "200ms" : "0ms",
+              }}
+            />
+          </div>
 
-          <a
-            href="https://instagram.com/berrygraphics"
-            target="_blank"
-            rel="noopener noreferrer"
-            {...fade(contact.visible, 300)}
-            className={`text-[13px] font-normal text-foreground tracking-wide hover:text-primary transition-colors duration-500 ${fade(contact.visible, 300).className}`}
-            style={fade(contact.visible, 300).style}
-          >
-            @berrygraphics
-          </a>
+          {/* Contact links */}
+          <div className="flex flex-col items-center gap-8">
+            <a
+              href="mailto:hola@berrygraphics.com"
+              className={`group flex items-center gap-4 ${anim(contact.visible, 300)}`}
+              style={animStyle(contact.visible, 300)}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors duration-500" />
+              <span className="text-[13px] sm:text-[14px] font-normal text-foreground tracking-wide group-hover:text-primary transition-colors duration-500">
+                hola@berrygraphics.com
+              </span>
+            </a>
+
+            <a
+              href="https://instagram.com/berrygraphics"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`group flex items-center gap-4 ${anim(contact.visible, 500)}`}
+              style={animStyle(contact.visible, 500)}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-primary/40 group-hover:bg-primary transition-colors duration-500" />
+              <span className="text-[13px] sm:text-[14px] font-normal text-foreground tracking-wide group-hover:text-primary transition-colors duration-500">
+                @berrygraphics
+              </span>
+            </a>
+          </div>
         </div>
       </section>
 
-      {/* ─── Footer ─── */}
-      <footer className="py-8 px-6 flex items-center justify-center">
-        <span className="text-[10px] text-muted-foreground/50 tracking-[0.3em] uppercase">
-          Berry Graphics® — {new Date().getFullYear()}
-        </span>
+      {/* ════════════════════════════ FOOTER ════════════════════════════ */}
+      <footer className="border-t border-border">
+        <div className="max-w-5xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-[11px] font-semibold text-primary tracking-tight">Berry</span>
+            <span className="text-[8px] font-normal tracking-[0.4em] uppercase text-muted-foreground">
+              Graphics®
+            </span>
+          </div>
+          <span className="text-[10px] text-muted-foreground/50 tracking-[0.15em]">
+            © {new Date().getFullYear()} — Todos los derechos reservados
+          </span>
+        </div>
       </footer>
     </div>
   );
