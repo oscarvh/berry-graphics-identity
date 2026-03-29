@@ -14,7 +14,7 @@ export const useScrollReveal = (delay = 0) => {
           observer.disconnect();
         }
       },
-      { threshold: 0.12 }
+      { threshold: 0.1 }
     );
     observer.observe(el);
     return () => observer.disconnect();
@@ -24,15 +24,13 @@ export const useScrollReveal = (delay = 0) => {
 };
 
 export const reveal = (visible: boolean) =>
-  `transition-all duration-[1200ms] ease-out ${
-    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
+  `transition-all duration-[1400ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
   }`;
 
 export const stagger = (visible: boolean, index: number) => ({
-  className: `transition-all duration-[900ms] ease-out ${
-    visible
-      ? "opacity-100 translate-y-0"
-      : "opacity-0 translate-y-6"
+  className: `transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+    visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
   }`,
-  style: { transitionDelay: visible ? `${index * 120}ms` : "0ms" },
+  style: { transitionDelay: visible ? `${index * 150}ms` : "0ms" },
 });
