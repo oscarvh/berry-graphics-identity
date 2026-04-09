@@ -2,18 +2,55 @@ import { useEffect, useState, useRef } from "react";
 import { ArrowRight, Mail, Instagram, Send } from "lucide-react";
 import berryLogo from "@/assets/berry-logo.webp";
 
-/* ─── Scroll-driven logo scale hook ─── */
+/* ─── Scroll-driven logo hook (rAF for smooth 60fps) ─── */
 const useScrollLogo = () => {
-  const [progress, setProgress] = useState(0);
+  const logoRef = useRef<HTMLImageElement>(null);
+  const frameRef = useRef<(HTMLDivElement | null)[]>([]);
+  const cornerRef = useRef<HTMLDivElement>(null);
+  const ticking = useRef(false);
+
   useEffect(() => {
-    const onScroll = () => {
-      const p = Math.min(window.scrollY / (window.innerHeight * 0.6), 1);
-      setProgress(p);
+    const update = () => {
+      const p = Math.min(window.scrollY / (window.innerHeight * 0.55), 1);
+      // Eased progress for organic feel
+      const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+
+      if (logoRef.current) {
+        const scale = 1 + ease * 0.6;
+        const y = ease * -40;
+        const opacity = Math.max(0, 1 - ease * 1.3);
+        logoRef.current.style.transform = `scale(${scale}) translateY(${y}px)`;
+        logoRef.current.style.opacity = `${opacity}`;
+      }
+
+      const fOpacity = Math.max(0, 1 - p * 2.5);
+      frameRef.current.forEach((el, i) => {
+        if (!el) return;
+        const rot = i === 0 ? p * -4 : p * 3;
+        const s = 1 - p * (i === 0 ? 0.15 : 0.1);
+        el.style.opacity = `${fOpacity}`;
+        el.style.transform = `rotate(${rot}deg) scale(${s})`;
+      });
+
+      if (cornerRef.current) {
+        cornerRef.current.style.opacity = `${Math.max(0, 1 - p * 3)}`;
+      }
+
+      ticking.current = false;
     };
+
+    const onScroll = () => {
+      if (!ticking.current) {
+        ticking.current = true;
+        requestAnimationFrame(update);
+      }
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  return progress;
+
+  return { logoRef, frameRef, cornerRef };
 };
 
 /* ─── Scroll reveal hook ─── */
@@ -45,7 +82,7 @@ const stagger = (v: boolean, i: number) => ({
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
-  const scrollP = useScrollLogo();
+  const { logoRef, frameRef, cornerRef } = useScrollLogo();
 
   const valueSection = useReveal();
   const impactSection = useReveal();
@@ -62,12 +99,6 @@ const Index = () => {
     className: `transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`,
     style: { transitionDelay: loaded ? `${delay}ms` : "0ms" },
   });
-
-  /* Logo transforms based on scroll */
-  const logoScale = 1 + scrollP * 2.5;
-  const logoOpacity = 1 - scrollP * 1.2;
-  const logoY = scrollP * -80;
-  const frameOpacity = Math.max(0, 1 - scrollP * 2);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -171,47 +202,38 @@ const Index = () => {
             {...fade(500)}
             className={`relative flex items-center justify-center py-16 lg:py-0 ${fade(500).className}`}
           >
-            {/* Geometric frames */}
+            {/* Geometric frames — controlled by refs */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div
+                ref={(el) => { frameRef.current[0] = el; }}
                 className="w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] lg:w-[400px] lg:h-[400px] border border-primary/[0.08]"
-                style={{
-                  opacity: frameOpacity,
-                  transform: `rotate(${scrollP * -6}deg) scale(${1 - scrollP * 0.2})`,
-                  transition: loaded ? "none" : "all 2000ms cubic-bezier(0.22,1,0.36,1)",
-                }}
+                style={{ willChange: "transform, opacity" }}
               />
             </div>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div
+                ref={(el) => { frameRef.current[1] = el; }}
                 className="w-[230px] h-[230px] sm:w-[280px] sm:h-[280px] lg:w-[330px] lg:h-[330px] border border-primary/[0.05]"
-                style={{
-                  opacity: frameOpacity,
-                  transform: `rotate(${scrollP * 4}deg) scale(${1 - scrollP * 0.15})`,
-                  transition: loaded ? "none" : "all 2200ms cubic-bezier(0.22,1,0.36,1)",
-                }}
+                style={{ willChange: "transform, opacity" }}
               />
             </div>
 
             {/* Red accent corner */}
             <div
+              ref={cornerRef}
               className="absolute top-8 right-8 sm:top-4 sm:right-4 lg:top-0 lg:right-0"
-              style={{ opacity: Math.max(0, loaded ? 1 - scrollP * 3 : 0), transition: loaded ? "none" : "opacity 1500ms ease" }}
             >
               <div className="w-16 h-px bg-primary/30" />
               <div className="w-px h-16 bg-primary/30 ml-[calc(100%-1px)]" />
             </div>
 
-            {/* Logo — scales & translates with scroll */}
+            {/* Logo — smooth scroll-driven parallax */}
             <img
+              ref={logoRef}
               src={berryLogo}
               alt="Berry Graphics diseño gráfico y social media marketing"
               className="relative z-10 w-40 h-40 sm:w-52 sm:h-52 lg:w-60 lg:h-60 object-contain"
-              style={{
-                transform: `scale(${logoScale}) translateY(${logoY}px)`,
-                opacity: Math.max(0, logoOpacity),
-                willChange: "transform, opacity",
-              }}
+              style={{ willChange: "transform, opacity" }}
             />
           </div>
         </div>
