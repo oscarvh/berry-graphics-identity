@@ -202,47 +202,38 @@ const Index = () => {
             {...fade(500)}
             className={`relative flex items-center justify-center py-16 lg:py-0 ${fade(500).className}`}
           >
-            {/* Geometric frames */}
+            {/* Geometric frames — controlled by refs */}
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div
+                ref={(el) => { frameRef.current[0] = el; }}
                 className="w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] lg:w-[400px] lg:h-[400px] border border-primary/[0.08]"
-                style={{
-                  opacity: frameOpacity,
-                  transform: `rotate(${scrollP * -6}deg) scale(${1 - scrollP * 0.2})`,
-                  transition: loaded ? "none" : "all 2000ms cubic-bezier(0.22,1,0.36,1)",
-                }}
+                style={{ willChange: "transform, opacity" }}
               />
             </div>
             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div
+                ref={(el) => { frameRef.current[1] = el; }}
                 className="w-[230px] h-[230px] sm:w-[280px] sm:h-[280px] lg:w-[330px] lg:h-[330px] border border-primary/[0.05]"
-                style={{
-                  opacity: frameOpacity,
-                  transform: `rotate(${scrollP * 4}deg) scale(${1 - scrollP * 0.15})`,
-                  transition: loaded ? "none" : "all 2200ms cubic-bezier(0.22,1,0.36,1)",
-                }}
+                style={{ willChange: "transform, opacity" }}
               />
             </div>
 
             {/* Red accent corner */}
             <div
+              ref={cornerRef}
               className="absolute top-8 right-8 sm:top-4 sm:right-4 lg:top-0 lg:right-0"
-              style={{ opacity: Math.max(0, loaded ? 1 - scrollP * 3 : 0), transition: loaded ? "none" : "opacity 1500ms ease" }}
             >
               <div className="w-16 h-px bg-primary/30" />
               <div className="w-px h-16 bg-primary/30 ml-[calc(100%-1px)]" />
             </div>
 
-            {/* Logo — scales & translates with scroll */}
+            {/* Logo — smooth scroll-driven parallax */}
             <img
+              ref={logoRef}
               src={berryLogo}
               alt="Berry Graphics diseño gráfico y social media marketing"
               className="relative z-10 w-40 h-40 sm:w-52 sm:h-52 lg:w-60 lg:h-60 object-contain"
-              style={{
-                transform: `scale(${logoScale}) translateY(${logoY}px)`,
-                opacity: Math.max(0, logoOpacity),
-                willChange: "transform, opacity",
-              }}
+              style={{ willChange: "transform, opacity" }}
             />
           </div>
         </div>
