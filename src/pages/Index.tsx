@@ -81,6 +81,7 @@ const stagger = (v: boolean, i: number) => ({
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const Index = () => {
+  const [loaded, setLoaded] = useState(false);
   const { logoRef, frameRef, cornerRef } = useScrollLogo();
 
   const valueSection = useReveal();
