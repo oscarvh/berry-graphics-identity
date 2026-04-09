@@ -2,18 +2,55 @@ import { useEffect, useState, useRef } from "react";
 import { ArrowRight, Mail, Instagram, Send } from "lucide-react";
 import berryLogo from "@/assets/berry-logo.webp";
 
-/* ─── Scroll-driven logo scale hook ─── */
+/* ─── Scroll-driven logo hook (rAF for smooth 60fps) ─── */
 const useScrollLogo = () => {
-  const [progress, setProgress] = useState(0);
+  const logoRef = useRef<HTMLImageElement>(null);
+  const frameRef = useRef<(HTMLDivElement | null)[]>([]);
+  const cornerRef = useRef<HTMLDivElement>(null);
+  const ticking = useRef(false);
+
   useEffect(() => {
-    const onScroll = () => {
-      const p = Math.min(window.scrollY / (window.innerHeight * 0.6), 1);
-      setProgress(p);
+    const update = () => {
+      const p = Math.min(window.scrollY / (window.innerHeight * 0.55), 1);
+      // Eased progress for organic feel
+      const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+
+      if (logoRef.current) {
+        const scale = 1 + ease * 0.6;
+        const y = ease * -40;
+        const opacity = Math.max(0, 1 - ease * 1.3);
+        logoRef.current.style.transform = `scale(${scale}) translateY(${y}px)`;
+        logoRef.current.style.opacity = `${opacity}`;
+      }
+
+      const fOpacity = Math.max(0, 1 - p * 2.5);
+      frameRef.current.forEach((el, i) => {
+        if (!el) return;
+        const rot = i === 0 ? p * -4 : p * 3;
+        const s = 1 - p * (i === 0 ? 0.15 : 0.1);
+        el.style.opacity = `${fOpacity}`;
+        el.style.transform = `rotate(${rot}deg) scale(${s})`;
+      });
+
+      if (cornerRef.current) {
+        cornerRef.current.style.opacity = `${Math.max(0, 1 - p * 3)}`;
+      }
+
+      ticking.current = false;
     };
+
+    const onScroll = () => {
+      if (!ticking.current) {
+        ticking.current = true;
+        requestAnimationFrame(update);
+      }
+    };
+
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-  return progress;
+
+  return { logoRef, frameRef, cornerRef };
 };
 
 /* ─── Scroll reveal hook ─── */
