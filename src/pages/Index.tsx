@@ -81,8 +81,7 @@ const stagger = (v: boolean, i: number) => ({
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const Index = () => {
-  const [loaded, setLoaded] = useState(false);
-  const scrollP = useScrollLogo();
+  const { logoRef, frameRef, cornerRef } = useScrollLogo();
 
   const valueSection = useReveal();
   const impactSection = useReveal();
@@ -99,12 +98,6 @@ const Index = () => {
     className: `transition-all duration-[1600ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${loaded ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`,
     style: { transitionDelay: loaded ? `${delay}ms` : "0ms" },
   });
-
-  /* Logo transforms based on scroll */
-  const logoScale = 1 + scrollP * 2.5;
-  const logoOpacity = 1 - scrollP * 1.2;
-  const logoY = scrollP * -80;
-  const frameOpacity = Math.max(0, 1 - scrollP * 2);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
