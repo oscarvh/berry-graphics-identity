@@ -1,59 +1,84 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ArrowRight, Mail, Instagram, Send } from "lucide-react";
 import berryLogo from "@/assets/berry-logo.webp";
 
-/* ─── Scroll-driven logo hook (rAF for smooth 60fps) ─── */
-const useScrollLogo = () => {
-  const logoRef = useRef<HTMLImageElement>(null);
-  const frameRef = useRef<(HTMLDivElement | null)[]>([]);
-  const cornerRef = useRef<HTMLDivElement>(null);
+/* ─────────────────────────────────────────────────────────
+   FLIP-style logo morph: the big hero logo physically
+   transforms into the navbar logo as the user scrolls.
+   We measure source (hero) and target (navbar) positions
+   once on layout, then drive a single transform with rAF.
+   ───────────────────────────────────────────────────────── */
+const useLogoMorph = () => {
+  const sourceRef = useRef<HTMLDivElement>(null); // placeholder in hero (final resting size)
+  const targetRef = useRef<HTMLDivElement>(null); // placeholder in navbar
+  const flyerRef = useRef<HTMLDivElement>(null);  // the actual moving element
   const ticking = useRef(false);
+  const cached = useRef<{ sx: number; sy: number; tx: number; ty: number; scale: number } | null>(null);
 
-  useEffect(() => {
-    const update = () => {
-      const p = Math.min(window.scrollY / (window.innerHeight * 0.55), 1);
-      // Eased progress for organic feel
-      const ease = p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-
-      if (logoRef.current) {
-        const scale = 1 + ease * 0.6;
-        const y = ease * -40;
-        const opacity = Math.max(0, 1 - ease * 1.3);
-        logoRef.current.style.transform = `scale(${scale}) translateY(${y}px)`;
-        logoRef.current.style.opacity = `${opacity}`;
-      }
-
-      const fOpacity = Math.max(0, 1 - p * 2.5);
-      frameRef.current.forEach((el, i) => {
-        if (!el) return;
-        const rot = i === 0 ? p * -4 : p * 3;
-        const s = 1 - p * (i === 0 ? 0.15 : 0.1);
-        el.style.opacity = `${fOpacity}`;
-        el.style.transform = `rotate(${rot}deg) scale(${s})`;
-      });
-
-      if (cornerRef.current) {
-        cornerRef.current.style.opacity = `${Math.max(0, 1 - p * 3)}`;
-      }
-
-      ticking.current = false;
+  const measure = () => {
+    if (!sourceRef.current || !targetRef.current || !flyerRef.current) return;
+    const s = sourceRef.current.getBoundingClientRect();
+    const t = targetRef.current.getBoundingClientRect();
+    // Position flyer at source (hero) location, then translate toward target as we scroll
+    cached.current = {
+      sx: s.left + s.width / 2,
+      sy: s.top + window.scrollY + s.height / 2,
+      tx: t.left + t.width / 2,
+      ty: t.top + t.height / 2, // navbar is fixed → no scrollY
+      scale: t.width / s.width,
     };
+    apply();
+  };
 
-    const onScroll = () => {
-      if (!ticking.current) {
-        ticking.current = true;
-        requestAnimationFrame(update);
-      }
-    };
+  const apply = () => {
+    if (!cached.current || !flyerRef.current) return;
+    const { sx, sy, tx, ty, scale } = cached.current;
+    // Progress 0 → 1 across roughly 70% of viewport height
+    const distance = window.innerHeight * 0.7;
+    const raw = Math.min(Math.max(window.scrollY / distance, 0), 1);
+    // easeInOutCubic
+    const p = raw < 0.5 ? 4 * raw * raw * raw : 1 - Math.pow(-2 * raw + 2, 3) / 2;
 
+    // Current absolute target position (target follows viewport since navbar is fixed)
+    const curTx = tx;
+    const curTy = ty + window.scrollY; // convert to document space
+
+    const x = sx + (curTx - sx) * p;
+    const y = sy + (curTy - sy) * p;
+    const sc = 1 + (scale - 1) * p;
+
+    flyerRef.current.style.transform = `translate3d(${x}px, ${y}px, 0) translate(-50%, -50%) scale(${sc})`;
+    flyerRef.current.style.opacity = `${0.35 + 0.65 * (1 - p) + p}`; // stay visible throughout
+    ticking.current = false;
+  };
+
+  const onScroll = () => {
+    if (!ticking.current) {
+      ticking.current = true;
+      requestAnimationFrame(apply);
+    }
+  };
+
+  useLayoutEffect(() => {
+    measure();
+    const onResize = () => { measure(); };
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener("resize", onResize);
+    // Re-measure after fonts/images settle
+    const t1 = setTimeout(measure, 200);
+    const t2 = setTimeout(measure, 800);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+      clearTimeout(t1); clearTimeout(t2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  return { logoRef, frameRef, cornerRef };
+  return { sourceRef, targetRef, flyerRef };
 };
 
-/* ─── Scroll reveal hook ─── */
+/* ─── Scroll reveal ─── */
 const useReveal = (threshold = 0.15) => {
   const ref = useRef<HTMLDivElement>(null);
   const [visible, setVisible] = useState(false);
@@ -75,24 +100,28 @@ const reveal = (v: boolean) =>
 
 const stagger = (v: boolean, i: number) => ({
   className: `transition-all duration-[1200ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${v ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}`,
-  style: { transitionDelay: v ? `${i * 150}ms` : "0ms" },
+  style: { transitionDelay: v ? `${i * 120}ms` : "0ms" },
 });
 
-/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
+/* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
-  const { logoRef, frameRef, cornerRef } = useScrollLogo();
+  const [scrolled, setScrolled] = useState(false);
+  const { sourceRef, targetRef, flyerRef } = useLogoMorph();
 
-  const valueSection = useReveal();
-  const impactSection = useReveal();
+  const editorialSection = useReveal();
+  const servicesSection = useReveal();
+  const manifestoSection = useReveal();
   const contactSection = useReveal();
 
   const [formSent, setFormSent] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setLoaded(true), 120);
-    return () => clearTimeout(t);
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { clearTimeout(t); window.removeEventListener("scroll", onScroll); };
   }, []);
 
   const fade = (delay: number) => ({
@@ -111,389 +140,487 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
 
-      {/* ─── HERO ─── */}
-      <section className="relative min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24 overflow-hidden">
-        {/* Fixed nav */}
-        <nav
-          {...fade(0)}
-          className={`absolute top-0 left-0 right-0 px-6 md:px-16 lg:px-24 py-8 flex items-center justify-between z-20 ${fade(0).className}`}
-        >
+      {/* ─────────── FIXED NAVBAR ─────────── */}
+      <nav
+        className={`fixed top-0 inset-x-0 z-40 transition-all duration-500 ${
+          scrolled ? "bg-background/85 backdrop-blur-md border-b border-border/60 py-4" : "bg-transparent py-7"
+        }`}
+      >
+        <div className="px-6 md:px-12 lg:px-20 flex items-center justify-between max-w-[1600px] mx-auto">
           <div className="flex items-center gap-3">
-            <img
-              src={berryLogo}
-              alt="Berry Graphics diseño gráfico y social media marketing"
-              className="w-8 h-8 object-contain"
-            />
+            {/* Target placeholder where the logo morphs to */}
+            <div ref={targetRef} className="w-7 h-7" aria-hidden />
             <div className="flex items-baseline gap-1.5">
-              <span className="text-[14px] font-semibold text-primary">Berry</span>
-              <span className="text-[8px] font-normal tracking-[0.45em] uppercase text-muted-foreground">
+              <span className="text-[15px] font-semibold text-primary leading-none">Berry</span>
+              <span className="text-[8px] font-normal tracking-[0.45em] uppercase text-muted-foreground leading-none">
                 Graphics
               </span>
             </div>
           </div>
-          <a
-            href="#contacto"
-            className="hidden sm:inline-flex items-center gap-2 px-6 py-2.5 border border-primary/20 text-[10px] font-semibold tracking-[0.2em] uppercase text-primary hover:bg-primary hover:text-primary-foreground transition-all duration-300"
-          >
-            Contactar
-          </a>
-        </nav>
+          <div className="hidden md:flex items-center gap-10">
+            <a href="#editorial" className="text-[10px] font-semibold tracking-[0.3em] uppercase text-foreground/70 hover:text-primary transition-colors">
+              Estudio
+            </a>
+            <a href="#servicios" className="text-[10px] font-semibold tracking-[0.3em] uppercase text-foreground/70 hover:text-primary transition-colors">
+              Servicios
+            </a>
+            <a href="#manifiesto" className="text-[10px] font-semibold tracking-[0.3em] uppercase text-foreground/70 hover:text-primary transition-colors">
+              Manifiesto
+            </a>
+            <a
+              href="#contacto"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-primary-foreground text-[10px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-secondary"
+            >
+              Contacto
+              <ArrowRight className="w-3 h-3" />
+            </a>
+          </div>
+        </div>
+      </nav>
 
-        {/* Hero grid */}
-        <div className="w-full max-w-7xl mx-auto grid lg:grid-cols-[1.2fr,1fr] gap-12 lg:gap-8 items-center">
-          {/* Left copy */}
-          <div className="relative z-10">
-            <div {...fade(200)} className={`flex items-center gap-4 mb-10 ${fade(200).className}`}>
-              <div className="w-12 h-px bg-primary" />
-              <span className="text-[10px] font-semibold tracking-[0.35em] uppercase text-primary">
-                Estudio creativo
+      {/* ─────────── FLYING LOGO (absolutely positioned in document) ─────────── */}
+      <div
+        ref={flyerRef}
+        className="absolute top-0 left-0 z-50 pointer-events-none"
+        style={{ willChange: "transform, opacity" }}
+      >
+        <img
+          src={berryLogo}
+          alt="Berry Graphics diseño gráfico y social media marketing"
+          className="w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain"
+        />
+      </div>
+
+      {/* ─────────── HERO — Editorial cover ─────────── */}
+      <section className="relative min-h-screen flex flex-col px-6 md:px-12 lg:px-20 pt-32 pb-20 overflow-hidden">
+        {/* Top meta strip */}
+        <div
+          {...fade(0)}
+          className={`flex items-center justify-between text-[10px] font-normal tracking-[0.3em] uppercase text-muted-foreground/70 border-t border-border pt-6 ${fade(0).className}`}
+        >
+          <span>Vol. 01 — Estudio Creativo</span>
+          <span className="hidden sm:inline">Buenos Aires · Argentina</span>
+          <span>{new Date().getFullYear()}</span>
+        </div>
+
+        {/* Main editorial grid */}
+        <div className="flex-1 max-w-[1600px] w-full mx-auto grid grid-cols-12 gap-6 lg:gap-10 items-center pt-12 lg:pt-20">
+          {/* Left — vertical kicker */}
+          <div className="hidden lg:flex col-span-1 flex-col items-start justify-end h-full pb-8">
+            <div
+              {...fade(300)}
+              className={`flex flex-col items-center gap-5 ${fade(300).className}`}
+            >
+              <div className="w-px h-20 bg-primary/40" />
+              <span
+                className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary"
+                style={{ writingMode: "vertical-rl", transform: "rotate(180deg)" }}
+              >
+                Berry Graphics — Est. 2019
+              </span>
+            </div>
+          </div>
+
+          {/* Center — Big editorial headline */}
+          <div className="col-span-12 lg:col-span-8 relative">
+            <div {...fade(200)} className={`mb-8 ${fade(200).className}`}>
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary/70">
+                Issue №01 / Identidad
               </span>
             </div>
 
             <h1
               {...fade(400)}
-              className={`text-[2.75rem] sm:text-[3.5rem] lg:text-[4.5rem] xl:text-[5.25rem] font-light leading-[1.05] tracking-[-0.03em] text-foreground ${fade(400).className}`}
+              className={`font-light text-foreground leading-[0.92] tracking-[-0.04em] ${fade(400).className}`}
+              style={{ fontSize: "clamp(3rem, 11vw, 9rem)" }}
             >
-              Diseño en
+              Diseño
               <br />
-              comunicación
+              <span className="italic font-light text-muted-foreground/80">en</span>{" "}
+              <span className="text-primary font-normal">comunicación</span>
               <br />
-              <span className="relative inline-block text-primary font-normal">
-                visual
-                <span
-                  className="absolute -bottom-1 left-0 h-[2px] bg-primary/30 origin-left"
-                  style={{
-                    width: loaded ? "100%" : "0%",
-                    transition: "width 1200ms cubic-bezier(0.22,1,0.36,1)",
-                    transitionDelay: "900ms",
-                  }}
-                />
-              </span>
+              visual.
             </h1>
 
-            <p
-              {...fade(600)}
-              className={`mt-8 text-[15px] sm:text-base font-normal text-muted-foreground leading-[1.85] max-w-[440px] ${fade(600).className}`}
-            >
-              Identidad visual y contenido para redes sociales.
-              Diseño gráfico profesional para marcas que buscan
-              posicionarse y conectar.
-            </p>
-
-            <div {...fade(800)} className={`mt-12 flex flex-col sm:flex-row gap-4 ${fade(800).className}`}>
-              <a
-                href="#contacto"
-                className="group inline-flex items-center justify-center gap-3 px-10 py-5 bg-primary text-primary-foreground text-[11px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-secondary"
-              >
-                Solicitar presupuesto
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-              </a>
-              <a
-                href="#valor"
-                className="inline-flex items-center justify-center px-10 py-5 border border-border text-foreground text-[11px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 hover:border-primary hover:text-primary"
-              >
-                Descubrí más
-              </a>
-            </div>
+            {/* Source placeholder for morph (invisible reservation) */}
+            <div
+              ref={sourceRef}
+              className="absolute right-0 -top-10 lg:-top-16 w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] opacity-0 pointer-events-none"
+              aria-hidden
+            />
           </div>
 
-          {/* Right — scroll-driven logo */}
-          <div
-            {...fade(500)}
-            className={`relative flex items-center justify-center py-16 lg:py-0 ${fade(500).className}`}
-          >
-            {/* Geometric frames — controlled by refs */}
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div
-                ref={(el) => { frameRef.current[0] = el; }}
-                className="w-[280px] h-[280px] sm:w-[340px] sm:h-[340px] lg:w-[400px] lg:h-[400px] border border-primary/[0.08]"
-                style={{ willChange: "transform, opacity" }}
-              />
+          {/* Right — caption block */}
+          <div className="col-span-12 lg:col-span-3 lg:pl-6 lg:border-l lg:border-border">
+            <div {...fade(700)} className={fade(700).className}>
+              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/60 mb-5">
+                ¶ Nota del editor
+              </p>
+              <p className="text-[14px] font-normal text-foreground/80 leading-[1.7] mb-8">
+                Identidad visual y contenido para redes sociales.
+                Diseño gráfico profesional para marcas que buscan
+                posicionarse y conectar.
+              </p>
+              <a
+                href="#contacto"
+                className="group inline-flex items-center gap-3 text-[10px] font-semibold tracking-[0.3em] uppercase text-primary border-b border-primary/30 pb-2 hover:border-primary transition-colors"
+              >
+                Iniciar proyecto
+                <ArrowRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+              </a>
             </div>
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <div
-                ref={(el) => { frameRef.current[1] = el; }}
-                className="w-[230px] h-[230px] sm:w-[280px] sm:h-[280px] lg:w-[330px] lg:h-[330px] border border-primary/[0.05]"
-                style={{ willChange: "transform, opacity" }}
-              />
-            </div>
-
-            {/* Red accent corner */}
-            <div
-              ref={cornerRef}
-              className="absolute top-8 right-8 sm:top-4 sm:right-4 lg:top-0 lg:right-0"
-            >
-              <div className="w-16 h-px bg-primary/30" />
-              <div className="w-px h-16 bg-primary/30 ml-[calc(100%-1px)]" />
-            </div>
-
-            {/* Logo — smooth scroll-driven parallax */}
-            <img
-              ref={logoRef}
-              src={berryLogo}
-              alt="Berry Graphics diseño gráfico y social media marketing"
-              className="relative z-10 w-40 h-40 sm:w-52 sm:h-52 lg:w-60 lg:h-60 object-contain"
-              style={{ willChange: "transform, opacity" }}
-            />
           </div>
         </div>
 
-        {/* Bottom stats */}
+        {/* Bottom meta — page numbering */}
         <div
-          {...fade(1000)}
-          className={`absolute bottom-0 left-0 right-0 border-t border-border px-6 md:px-16 lg:px-24 py-6 ${fade(1000).className}`}
+          {...fade(900)}
+          className={`mt-auto pt-12 flex items-end justify-between border-b border-border pb-6 ${fade(900).className}`}
         >
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center gap-8 sm:gap-16">
-            {[
-              ["150+", "Marcas"],
-              ["5+", "Años"],
-              ["100%", "Dedicación"],
-            ].map(([num, label]) => (
-              <div key={label} className="flex items-baseline gap-2.5">
-                <span className="text-xl sm:text-2xl font-light text-primary">{num}</span>
-                <span className="text-[10px] font-normal tracking-[0.2em] uppercase text-muted-foreground">
-                  {label}
-                </span>
-              </div>
-            ))}
+          <div className="flex items-baseline gap-3 text-[10px] font-normal tracking-[0.3em] uppercase text-muted-foreground/70">
+            <span>Pág.</span>
+            <span className="text-primary font-semibold text-base">01</span>
+            <span>/ 04</span>
+          </div>
+          <div className="hidden md:flex items-center gap-3 text-[10px] font-normal tracking-[0.3em] uppercase text-muted-foreground/70">
+            <div className="w-12 h-px bg-primary/40" />
+            <span>Scroll para continuar</span>
+          </div>
+          <div className="text-[10px] font-normal tracking-[0.3em] uppercase text-muted-foreground/70">
+            Identidad / Social
           </div>
         </div>
       </section>
 
-      {/* ─── MARQUEE ─── */}
+      {/* ─────────── EDITORIAL: Two-column long form ─────────── */}
+      <section
+        id="editorial"
+        ref={editorialSection.ref}
+        className="px-6 md:px-12 lg:px-20 py-32 md:py-44 border-t border-border"
+      >
+        <div className={`max-w-[1600px] mx-auto grid grid-cols-12 gap-6 lg:gap-12 ${reveal(editorialSection.visible)}`}>
+          {/* Section number */}
+          <div className="col-span-12 lg:col-span-2">
+            <div className="flex lg:flex-col items-center lg:items-start gap-4">
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary">§ 02</span>
+              <div className="w-12 lg:w-px lg:h-12 h-px bg-primary/40" />
+              <span className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/60">
+                El estudio
+              </span>
+            </div>
+          </div>
+
+          {/* Lead paragraph */}
+          <div className="col-span-12 lg:col-span-7">
+            <h2
+              className="font-light text-foreground leading-[1.05] tracking-[-0.025em] mb-12"
+              style={{ fontSize: "clamp(2rem, 5vw, 3.75rem)" }}
+            >
+              <span className="text-primary/30 font-normal text-[1.2em] align-top mr-2 leading-none">“</span>
+              Creamos sistemas visuales que sostienen marcas durante años,
+              no <span className="italic text-primary">tendencias</span> que duran semanas.
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-8 lg:gap-12 text-[14px] font-normal text-foreground/75 leading-[1.85]">
+              <p>
+                Berry Graphics es un estudio de diseño en comunicación visual
+                y social media marketing. Trabajamos con marcas que entienden
+                el diseño como una inversión estratégica, no como decoración.
+              </p>
+              <p>
+                Cada identidad, sistema y pieza nace de una pregunta simple:
+                ¿qué necesita esta marca para sostenerse y crecer en el tiempo?
+                La respuesta guía cada decisión visual.
+              </p>
+            </div>
+          </div>
+
+          {/* Sidebar facts */}
+          <div className="col-span-12 lg:col-span-3 lg:pl-6 lg:border-l lg:border-border">
+            <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/60 mb-6">
+              ⊹ Datos
+            </p>
+            <ul className="space-y-5">
+              {[
+                ["150+", "Marcas potenciadas"],
+                ["5+", "Años en el oficio"],
+                ["100%", "Diseño a medida"],
+                ["24h", "Respuesta a consultas"],
+              ].map(([n, l]) => (
+                <li key={l} className="flex items-baseline gap-4 border-b border-border pb-4 last:border-0">
+                  <span className="text-2xl font-light text-primary tabular-nums">{n}</span>
+                  <span className="text-[11px] tracking-[0.15em] uppercase text-muted-foreground">{l}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ─────────── MARQUEE strip ─────────── */}
       <div className="border-y border-border py-5 overflow-hidden bg-background">
         <div className="animate-marquee flex whitespace-nowrap">
           {[
-            "Branding", "Social Media", "Identidad Visual", "Comunicación",
-            "Estrategia", "Diseño Editorial", "Marketing Digital", "Contenido Visual",
-            "Branding", "Social Media", "Identidad Visual", "Comunicación",
-            "Estrategia", "Diseño Editorial", "Marketing Digital", "Contenido Visual",
+            "Identidad Visual", "Social Media Marketing", "Diseño Editorial",
+            "Comunicación Digital", "Branding", "Diseño para Instagram",
+            "Identidad Visual", "Social Media Marketing", "Diseño Editorial",
+            "Comunicación Digital", "Branding", "Diseño para Instagram",
           ].map((item, i) => (
             <span key={i} className="flex items-center gap-8 mx-8">
-              <span className="text-[11px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/60">
+              <span className="text-[11px] font-semibold tracking-[0.35em] uppercase text-foreground/70">
                 {item}
               </span>
-              <span className="w-1 h-1 rounded-full bg-primary/30" />
+              <span className="w-1.5 h-1.5 bg-primary rotate-45" />
             </span>
           ))}
         </div>
       </div>
 
-      {/* ─── VALUE ─── */}
-      <section id="valor" ref={valueSection.ref} className="px-6 md:px-16 lg:px-24 py-28 md:py-40">
-        <div className={`max-w-7xl mx-auto ${reveal(valueSection.visible)}`}>
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-20 mb-24">
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-8 h-px bg-primary" />
-                <span className="text-[10px] font-semibold tracking-[0.35em] uppercase text-primary">
-                  Servicios
-                </span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-[3rem] font-light text-foreground leading-[1.1] tracking-[-0.02em]">
-                Diseño gráfico
-                <span className="text-primary font-normal"> profesional</span>
-                <br />
-                para tu
-                <span className="text-primary font-normal"> marca</span>
+      {/* ─────────── SERVICES — editorial index ─────────── */}
+      <section
+        id="servicios"
+        ref={servicesSection.ref}
+        className="px-6 md:px-12 lg:px-20 py-32 md:py-44"
+      >
+        <div className={`max-w-[1600px] mx-auto ${reveal(servicesSection.visible)}`}>
+          <div className="grid grid-cols-12 gap-6 lg:gap-12 mb-20 lg:mb-28">
+            <div className="col-span-12 lg:col-span-2">
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary">§ 03</span>
+            </div>
+            <div className="col-span-12 lg:col-span-7">
+              <h2
+                className="font-light text-foreground leading-[1.02] tracking-[-0.03em]"
+                style={{ fontSize: "clamp(2.25rem, 6vw, 5rem)" }}
+              >
+                Servicios
+                <span className="italic text-muted-foreground/70"> &amp; </span>
+                <span className="text-primary font-normal">disciplinas</span>
               </h2>
             </div>
-            <div className="flex items-end">
-              <p className="text-[15px] font-normal text-muted-foreground leading-[1.85] max-w-md lg:ml-auto">
-                Identidad visual y contenido para redes sociales.
-                Diseño para Instagram y comunicación digital que conecta
-                con tu audiencia y posiciona tu marca.
+            <div className="col-span-12 lg:col-span-3 lg:pl-6 lg:border-l lg:border-border flex items-end">
+              <p className="text-[13px] font-normal text-muted-foreground leading-[1.85]">
+                Tres áreas de práctica conectadas entre sí.
+                Pensamos identidad, contenido y comunicación
+                como un mismo organismo.
               </p>
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-0">
+          {/* Editorial list — large rows */}
+          <div className="border-t border-border">
             {[
-              { n: "01", title: "Identidad visual", text: "Sistemas visuales coherentes que comunican la esencia de tu marca en cada punto de contacto." },
-              { n: "02", title: "Social media marketing", text: "Contenido visual estratégico para redes sociales que genera engagement y construye comunidad." },
-              { n: "03", title: "Comunicación digital", text: "Diseño para Instagram y plataformas digitales que posiciona tu marca y conecta con tu audiencia." },
-            ].map((v, i) => (
-              <div
-                key={v.n}
-                {...stagger(valueSection.visible, i + 1)}
-                className={`relative p-10 lg:p-14 border border-border -ml-px first:ml-0 -mt-px first:mt-0 md:mt-0 group hover:border-primary/30 transition-colors duration-500 ${stagger(valueSection.visible, i + 1).className}`}
+              {
+                n: "01",
+                title: "Identidad visual",
+                tags: ["Logotipo", "Sistema", "Manual de marca", "Aplicaciones"],
+                text: "Sistemas visuales coherentes que comunican la esencia de tu marca en cada punto de contacto. Desde logotipos hasta manuales completos.",
+              },
+              {
+                n: "02",
+                title: "Social media marketing",
+                tags: ["Instagram", "Estrategia", "Contenido", "Plantillas"],
+                text: "Contenido visual estratégico para redes sociales que genera engagement, posiciona tu marca y construye comunidad real.",
+              },
+              {
+                n: "03",
+                title: "Comunicación digital",
+                tags: ["Editorial", "Web", "Campañas", "Storytelling visual"],
+                text: "Diseño para Instagram, plataformas digitales y campañas que conectan con tu audiencia y refuerzan el posicionamiento.",
+              },
+            ].map((s, i) => (
+              <article
+                key={s.n}
+                {...stagger(servicesSection.visible, i)}
+                className={`group grid grid-cols-12 gap-4 lg:gap-12 py-12 lg:py-16 border-b border-border hover:bg-muted/40 transition-colors duration-500 px-2 ${stagger(servicesSection.visible, i).className}`}
               >
-                <div className="absolute top-0 left-0 w-0 h-[2px] bg-primary group-hover:w-full transition-all duration-700" />
-                <span className="text-[40px] sm:text-[48px] font-light text-primary/10 leading-none group-hover:text-primary/20 transition-colors duration-500">
-                  {v.n}
-                </span>
-                <h3 className="mt-6 text-lg font-normal text-foreground leading-snug">{v.title}</h3>
-                <p className="mt-4 text-[13px] font-normal text-muted-foreground leading-[1.85]">{v.text}</p>
-              </div>
+                <div className="col-span-2 lg:col-span-1">
+                  <span className="text-[11px] font-semibold tracking-[0.3em] uppercase text-primary tabular-nums">
+                    /{s.n}
+                  </span>
+                </div>
+                <div className="col-span-10 lg:col-span-5">
+                  <h3
+                    className="font-light text-foreground leading-[1.05] tracking-[-0.02em] group-hover:text-primary transition-colors duration-500"
+                    style={{ fontSize: "clamp(1.75rem, 3.5vw, 2.75rem)" }}
+                  >
+                    {s.title}
+                  </h3>
+                </div>
+                <div className="col-span-12 lg:col-span-4">
+                  <p className="text-[14px] font-normal text-muted-foreground leading-[1.85]">
+                    {s.text}
+                  </p>
+                </div>
+                <div className="col-span-12 lg:col-span-2 flex flex-wrap gap-2 lg:justify-end items-start">
+                  {s.tags.map((t) => (
+                    <span key={t} className="text-[10px] font-normal tracking-[0.15em] uppercase text-muted-foreground/70 border border-border px-2.5 py-1">
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ─── IMPACT ─── */}
-      <section ref={impactSection.ref} className="relative overflow-hidden">
-        <div className="bg-primary text-primary-foreground px-6 md:px-16 lg:px-24 py-24 md:py-32">
-          <div className={`max-w-7xl mx-auto ${reveal(impactSection.visible)}`}>
-            <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
-              <div>
-                <h2 className="text-4xl sm:text-5xl lg:text-[3.75rem] font-light leading-[1.08] tracking-[-0.02em]">
-                  Marcas que
-                  <br />
-                  comunican con
-                  <br />
-                  <span className="font-normal">claridad</span>
-                </h2>
-              </div>
-              <div className="flex flex-col gap-10">
-                <div className="grid grid-cols-2 gap-10">
-                  <div>
-                    <span className="text-4xl sm:text-5xl font-light">150+</span>
-                    <div className="mt-3 w-8 h-px bg-primary-foreground/30" />
-                    <p className="mt-3 text-[11px] font-normal tracking-[0.2em] uppercase opacity-70">
-                      Marcas potenciadas
-                    </p>
+      {/* ─────────── MANIFESTO — full-bleed red feature ─────────── */}
+      <section
+        id="manifiesto"
+        ref={manifestoSection.ref}
+        className="relative bg-primary text-primary-foreground overflow-hidden"
+      >
+        <div className={`px-6 md:px-12 lg:px-20 py-32 md:py-44 ${reveal(manifestoSection.visible)}`}>
+          <div className="max-w-[1600px] mx-auto grid grid-cols-12 gap-6 lg:gap-12">
+            <div className="col-span-12 lg:col-span-2">
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase opacity-80">§ 04</span>
+              <div className="mt-4 w-12 h-px bg-primary-foreground/40" />
+              <p className="mt-4 text-[10px] font-semibold tracking-[0.3em] uppercase opacity-70">
+                Manifiesto
+              </p>
+            </div>
+
+            <div className="col-span-12 lg:col-span-10">
+              <h2
+                className="font-light leading-[0.98] tracking-[-0.03em]"
+                style={{ fontSize: "clamp(2.5rem, 8vw, 7rem)" }}
+              >
+                Diseñamos
+                <br />
+                para marcas que
+                <br />
+                <span className="italic opacity-90">comunican con</span>{" "}
+                <span className="font-normal underline decoration-2 underline-offset-[12px]">claridad</span>.
+              </h2>
+
+              <div className="mt-16 grid sm:grid-cols-3 gap-10 lg:gap-16 max-w-4xl">
+                {[
+                  ["No vendemos humo.", "Cada propuesta tiene un porqué estratégico."],
+                  ["No seguimos modas.", "Apostamos por sistemas atemporales."],
+                  ["No improvisamos.", "Proceso, criterio y oficio en cada decisión."],
+                ].map(([t, d]) => (
+                  <div key={t}>
+                    <p className="text-[15px] font-semibold leading-snug mb-2">{t}</p>
+                    <p className="text-[13px] font-normal leading-[1.85] opacity-80">{d}</p>
                   </div>
-                  <div>
-                    <span className="text-4xl sm:text-5xl font-light">5+</span>
-                    <div className="mt-3 w-8 h-px bg-primary-foreground/30" />
-                    <p className="mt-3 text-[11px] font-normal tracking-[0.2em] uppercase opacity-70">
-                      Años de experiencia
-                    </p>
-                  </div>
-                </div>
-                <p className="text-[15px] font-normal leading-[1.85] opacity-80 max-w-sm">
-                  Diseño gráfico profesional para marcas.
-                  Cada proyecto transforma la percepción y el posicionamiento de tu marca.
-                </p>
-                <a
-                  href="#contacto"
-                  className="group inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.2em] uppercase opacity-90 hover:opacity-100 transition-opacity duration-300"
-                >
-                  Empezá tu proyecto
-                  <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                </a>
+                ))}
               </div>
+
+              <a
+                href="#contacto"
+                className="group mt-16 inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.25em] uppercase border-b border-primary-foreground/40 pb-2 hover:border-primary-foreground transition-colors"
+              >
+                Hablemos de tu marca
+                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* ─── CONTACT ─── */}
-      <section id="contacto" ref={contactSection.ref} className="px-6 md:px-16 lg:px-24 py-28 md:py-40">
-        <div className={`max-w-7xl mx-auto ${reveal(contactSection.visible)}`}>
-          {/* CTA Banner */}
-          <div className="relative border border-border p-12 sm:p-16 lg:p-20 mb-28 overflow-hidden group hover:border-primary/20 transition-colors duration-500">
-            <div className="absolute top-0 right-0 w-24 h-24 border-b border-l border-primary/10 pointer-events-none" />
-            <div className="relative flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10">
-              <div>
-                <h3 className="text-2xl sm:text-3xl lg:text-[2.5rem] font-light text-foreground leading-[1.15] tracking-[-0.01em]">
-                  ¿Listo para llevar tu marca
-                  <br />
-                  <span className="text-primary font-normal">al siguiente nivel</span>?
-                </h3>
-                <p className="mt-5 text-[14px] text-muted-foreground leading-[1.8] max-w-md">
-                  Contanos tu idea y te respondemos en menos de 24 horas
-                  con una propuesta personalizada.
-                </p>
-              </div>
-              <a
-                href="#contacto-form"
-                className="shrink-0 group/btn inline-flex items-center gap-3 px-10 py-5 bg-primary text-primary-foreground text-[11px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-secondary"
+      {/* ─────────── CONTACT — editorial form ─────────── */}
+      <section
+        id="contacto"
+        ref={contactSection.ref}
+        className="px-6 md:px-12 lg:px-20 py-32 md:py-44"
+      >
+        <div className={`max-w-[1600px] mx-auto ${reveal(contactSection.visible)}`}>
+          <div className="grid grid-cols-12 gap-6 lg:gap-12 mb-16 lg:mb-20">
+            <div className="col-span-12 lg:col-span-2">
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary">§ 05</span>
+            </div>
+            <div className="col-span-12 lg:col-span-10">
+              <h2
+                className="font-light text-foreground leading-[1.02] tracking-[-0.03em]"
+                style={{ fontSize: "clamp(2.25rem, 6vw, 5rem)" }}
               >
-                Escribinos ahora
-                <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover/btn:translate-x-1" />
-              </a>
+                Empecemos a
+                <br />
+                <span className="text-primary font-normal">trabajar juntos</span>.
+              </h2>
             </div>
           </div>
 
-          {/* Form grid */}
-          <div id="contacto-form" className="grid lg:grid-cols-[1fr,1.2fr] gap-20 lg:gap-32">
-            <div>
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-8 h-px bg-primary" />
-                <span className="text-[10px] font-semibold tracking-[0.35em] uppercase text-primary">
-                  Contacto
-                </span>
-              </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-light text-foreground leading-[1.1] tracking-[-0.02em]">
-                Empecemos a
-                <br />
-                <span className="text-primary font-normal">trabajar juntos</span>
-              </h2>
-              <p className="mt-7 text-[14px] font-normal text-muted-foreground leading-[1.85] max-w-sm">
-                Completá el formulario y te contactamos con una propuesta
-                a medida para tu proyecto. Sin compromiso.
+          <div className="grid grid-cols-12 gap-6 lg:gap-16">
+            {/* Contact info */}
+            <aside className="col-span-12 lg:col-span-4 lg:border-r lg:border-border lg:pr-8">
+              <p className="text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/60 mb-8">
+                ✦ Canales directos
               </p>
 
-              <div className="mt-14 space-y-6">
+              <div className="space-y-6">
                 <a
                   href="mailto:hola@berrygraphics.com"
-                  className="group flex items-center gap-4 text-[13px] text-foreground hover:text-primary transition-colors duration-300"
-                  title="Contacto de diseño gráfico y marketing digital"
+                  aria-label="Contacto de diseño gráfico y marketing digital"
+                  className="group flex items-center gap-4 text-[14px] text-foreground hover:text-primary transition-colors duration-300 border-b border-border pb-4"
                 >
-                  <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300">
-                    <Mail className="w-4 h-4 text-primary/60" />
-                  </div>
+                  <Mail className="w-4 h-4 text-primary/70" strokeWidth={1.5} />
                   hola@berrygraphics.com
                 </a>
                 <a
                   href="https://instagram.com/berrygraphics"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-4 text-[13px] text-foreground hover:text-primary transition-colors duration-300"
-                  title="Ver trabajos en Instagram de diseño gráfico"
+                  aria-label="Ver trabajos en Instagram de diseño gráfico"
+                  className="group flex items-center gap-4 text-[14px] text-foreground hover:text-primary transition-colors duration-300 border-b border-border pb-4"
                 >
-                  <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300">
-                    <Instagram className="w-4 h-4 text-primary/60" />
-                  </div>
+                  <Instagram className="w-4 h-4 text-primary/70" strokeWidth={1.5} />
                   @berrygraphics
                 </a>
               </div>
-            </div>
 
-            <div>
-              <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-                <div className="grid sm:grid-cols-2 gap-8">
+              <div className="mt-12 space-y-3 text-[11px] font-normal tracking-[0.15em] uppercase text-muted-foreground/70">
+                <p>Buenos Aires · Argentina</p>
+                <p>Lun – Vie · 10 a 18 hs</p>
+                <p className="text-primary">Respuesta en menos de 24 hs</p>
+              </div>
+            </aside>
+
+            {/* Form */}
+            <div className="col-span-12 lg:col-span-8">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-10">
+                <div className="grid sm:grid-cols-2 gap-10">
                   <div>
-                    <label className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                      Nombre *
+                    <label className="block text-[10px] font-semibold tracking-[0.25em] uppercase text-muted-foreground mb-3">
+                      01 — Nombre
                     </label>
                     <input
                       name="nombre"
                       type="text"
                       required
                       placeholder="Tu nombre completo"
-                      className="w-full bg-transparent border-b border-border py-4 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500"
+                      className="w-full bg-transparent border-b border-border py-3 text-[15px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                      Email *
+                    <label className="block text-[10px] font-semibold tracking-[0.25em] uppercase text-muted-foreground mb-3">
+                      02 — Email
                     </label>
                     <input
                       name="email"
                       type="email"
                       required
                       placeholder="tu@email.com"
-                      className="w-full bg-transparent border-b border-border py-4 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500"
+                      className="w-full bg-transparent border-b border-border py-3 text-[15px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground mb-4">
-                    Mensaje *
+                  <label className="block text-[10px] font-semibold tracking-[0.25em] uppercase text-muted-foreground mb-3">
+                    03 — Contanos sobre tu proyecto
                   </label>
                   <textarea
                     name="mensaje"
                     required
                     rows={5}
-                    placeholder="Contanos sobre tu proyecto, qué necesitás y cuáles son tus objetivos..."
-                    className="w-full bg-transparent border-b border-border py-4 text-[14px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500 resize-none"
+                    placeholder="Qué necesitás, en qué momento está tu marca, objetivos…"
+                    className="w-full bg-transparent border-b border-border py-3 text-[15px] text-foreground placeholder:text-muted-foreground/40 focus:outline-none focus:border-primary transition-colors duration-500 resize-none"
                   />
                 </div>
+
                 <button
                   type="submit"
-                  className="mt-2 self-start inline-flex items-center gap-3 px-12 py-5 bg-primary text-primary-foreground text-[11px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 hover:bg-secondary group"
+                  className="mt-2 self-start group inline-flex items-center gap-3 px-12 py-5 bg-primary text-primary-foreground text-[11px] font-semibold tracking-[0.25em] uppercase transition-all duration-300 hover:bg-secondary"
                 >
                   {formSent ? "¡Enviado!" : "Enviar mensaje"}
                   <Send className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-0.5" />
@@ -504,19 +631,22 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ─── FOOTER ─── */}
+      {/* ─────────── FOOTER ─────────── */}
       <footer className="border-t border-border">
-        <div className="max-w-7xl mx-auto px-6 md:px-16 lg:px-24 py-12 flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <img src={berryLogo} alt="Berry Graphics diseño gráfico" className="w-6 h-6 object-contain" />
+        <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-20 py-10 grid grid-cols-12 gap-6 items-center">
+          <div className="col-span-12 md:col-span-4 flex items-center gap-3">
+            <img src={berryLogo} alt="Berry Graphics" className="w-6 h-6 object-contain" />
             <span className="text-[13px] font-semibold text-primary">Berry</span>
             <span className="text-[8px] font-normal tracking-[0.45em] uppercase text-muted-foreground">
               Graphics®
             </span>
           </div>
-          <span className="text-[10px] text-muted-foreground/50 tracking-[0.2em]">
-            © 2024 — Todos los derechos reservados
-          </span>
+          <div className="col-span-12 md:col-span-4 text-center text-[10px] font-normal tracking-[0.3em] uppercase text-muted-foreground/60">
+            Diseño en comunicación visual
+          </div>
+          <div className="col-span-12 md:col-span-4 md:text-right text-[10px] tracking-[0.2em] text-muted-foreground/50">
+            © {new Date().getFullYear()} — Todos los derechos reservados
+          </div>
         </div>
       </footer>
     </div>
