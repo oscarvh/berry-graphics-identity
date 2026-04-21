@@ -103,6 +103,21 @@ const stagger = (v: boolean, i: number) => ({
   style: { transitionDelay: v ? `${i * 120}ms` : "0ms" },
 });
 
+/* ─── Editorial section divider ─── */
+const SectionDivider = ({ label, mark = "§" }: { label: string; mark?: string }) => (
+  <div className="px-6 md:px-12 lg:px-20" aria-hidden>
+    <div className="max-w-[1600px] mx-auto flex items-center gap-6 py-10">
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-primary text-[14px] leading-none rotate-45 inline-block">◆</span>
+      <span className="text-[9px] font-semibold tracking-[0.45em] uppercase text-muted-foreground/70">
+        {mark} {label}
+      </span>
+      <span className="text-primary text-[14px] leading-none rotate-45 inline-block">◆</span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  </div>
+);
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const Index = () => {
@@ -292,11 +307,14 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ─────────── SECTION DIVIDER ─────────── */}
+      <SectionDivider label="El estudio" mark="§ 02" />
+
       {/* ─────────── EDITORIAL: Two-column long form ─────────── */}
       <section
         id="editorial"
         ref={editorialSection.ref}
-        className="px-6 md:px-12 lg:px-20 py-32 md:py-44 border-t border-border"
+        className="px-6 md:px-12 lg:px-20 pt-8 pb-32 md:pb-44"
       >
         <div className={`max-w-[1600px] mx-auto grid grid-cols-12 gap-6 lg:gap-12 ${reveal(editorialSection.visible)}`}>
           {/* Section number */}
@@ -375,11 +393,14 @@ const Index = () => {
         </div>
       </div>
 
+      {/* ─────────── SECTION DIVIDER ─────────── */}
+      <SectionDivider label="Servicios" mark="§ 03" />
+
       {/* ─────────── SERVICES — editorial index ─────────── */}
       <section
         id="servicios"
         ref={servicesSection.ref}
-        className="px-6 md:px-12 lg:px-20 py-32 md:py-44"
+        className="px-6 md:px-12 lg:px-20 pt-8 pb-32 md:pb-44"
       >
         <div className={`max-w-[1600px] mx-auto ${reveal(servicesSection.visible)}`}>
           <div className="grid grid-cols-12 gap-6 lg:gap-12 mb-20 lg:mb-28">
@@ -463,33 +484,36 @@ const Index = () => {
         </div>
       </section>
 
-      {/* ─────────── MANIFESTO — full-bleed red feature ─────────── */}
+      {/* ─────────── SECTION DIVIDER ─────────── */}
+      <SectionDivider label="Manifiesto" mark="✦" />
+
+      {/* ─────────── MANIFESTO — light, editorial ─────────── */}
       <section
         id="manifiesto"
         ref={manifestoSection.ref}
-        className="relative bg-primary text-primary-foreground overflow-hidden"
+        className="relative overflow-hidden px-6 md:px-12 lg:px-20 py-32 md:py-44"
       >
-        <div className={`px-6 md:px-12 lg:px-20 py-32 md:py-44 ${reveal(manifestoSection.visible)}`}>
+        <div className={`${reveal(manifestoSection.visible)}`}>
           <div className="max-w-[1600px] mx-auto grid grid-cols-12 gap-6 lg:gap-12">
             <div className="col-span-12 lg:col-span-2">
-              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase opacity-80">§ 04</span>
-              <div className="mt-4 w-12 h-px bg-primary-foreground/40" />
-              <p className="mt-4 text-[10px] font-semibold tracking-[0.3em] uppercase opacity-70">
+              <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary">§ 04</span>
+              <div className="mt-4 w-12 h-px bg-primary/40" />
+              <p className="mt-4 text-[10px] font-semibold tracking-[0.3em] uppercase text-muted-foreground/70">
                 Manifiesto
               </p>
             </div>
 
             <div className="col-span-12 lg:col-span-10">
               <h2
-                className="font-light leading-[0.98] tracking-[-0.03em]"
+                className="font-light leading-[0.98] tracking-[-0.03em] text-foreground"
                 style={{ fontSize: "clamp(2.5rem, 8vw, 7rem)" }}
               >
                 Diseñamos
                 <br />
                 para marcas que
                 <br />
-                <span className="italic opacity-90">comunican con</span>{" "}
-                <span className="font-normal underline decoration-2 underline-offset-[12px]">claridad</span>.
+                <span className="italic text-muted-foreground/80">comunican con</span>{" "}
+                <span className="font-normal text-primary underline decoration-2 underline-offset-[12px] decoration-primary/40">claridad</span>.
               </h2>
 
               <div className="mt-16 grid sm:grid-cols-3 gap-10 lg:gap-16 max-w-4xl">
@@ -498,16 +522,16 @@ const Index = () => {
                   ["No seguimos modas.", "Apostamos por sistemas atemporales."],
                   ["No improvisamos.", "Proceso, criterio y oficio en cada decisión."],
                 ].map(([t, d]) => (
-                  <div key={t}>
-                    <p className="text-[15px] font-semibold leading-snug mb-2">{t}</p>
-                    <p className="text-[13px] font-normal leading-[1.85] opacity-80">{d}</p>
+                  <div key={t} className="border-t border-border pt-6">
+                    <p className="text-[15px] font-semibold leading-snug mb-2 text-foreground">{t}</p>
+                    <p className="text-[13px] font-normal leading-[1.85] text-muted-foreground">{d}</p>
                   </div>
                 ))}
               </div>
 
               <a
                 href="#contacto"
-                className="group mt-16 inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.25em] uppercase border-b border-primary-foreground/40 pb-2 hover:border-primary-foreground transition-colors"
+                className="group mt-16 inline-flex items-center gap-3 text-[11px] font-semibold tracking-[0.25em] uppercase text-primary border-b border-primary/30 pb-2 hover:border-primary transition-colors"
               >
                 Hablemos de tu marca
                 <ArrowRight className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
@@ -517,11 +541,14 @@ const Index = () => {
         </div>
       </section>
 
+      {/* ─────────── SECTION DIVIDER ─────────── */}
+      <SectionDivider label="Contacto" mark="§ 05" />
+
       {/* ─────────── CONTACT — editorial form ─────────── */}
       <section
         id="contacto"
         ref={contactSection.ref}
-        className="px-6 md:px-12 lg:px-20 py-32 md:py-44"
+        className="px-6 md:px-12 lg:px-20 pt-8 pb-32 md:pb-44"
       >
         <div className={`max-w-[1600px] mx-auto ${reveal(contactSection.visible)}`}>
           <div className="grid grid-cols-12 gap-6 lg:gap-12 mb-16 lg:mb-20">
