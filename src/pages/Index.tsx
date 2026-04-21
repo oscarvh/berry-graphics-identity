@@ -103,6 +103,21 @@ const stagger = (v: boolean, i: number) => ({
   style: { transitionDelay: v ? `${i * 120}ms` : "0ms" },
 });
 
+/* ─── Editorial section divider ─── */
+const SectionDivider = ({ label, mark = "§" }: { label: string; mark?: string }) => (
+  <div className="px-6 md:px-12 lg:px-20" aria-hidden>
+    <div className="max-w-[1600px] mx-auto flex items-center gap-6 py-10">
+      <div className="h-px flex-1 bg-border" />
+      <span className="text-primary text-[14px] leading-none rotate-45 inline-block">◆</span>
+      <span className="text-[9px] font-semibold tracking-[0.45em] uppercase text-muted-foreground/70">
+        {mark} {label}
+      </span>
+      <span className="text-primary text-[14px] leading-none rotate-45 inline-block">◆</span>
+      <div className="h-px flex-1 bg-border" />
+    </div>
+  </div>
+);
+
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
 const Index = () => {
