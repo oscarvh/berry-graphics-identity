@@ -393,11 +393,14 @@ const Index = () => {
         </div>
       </div>
 
+      {/* ─────────── SECTION DIVIDER ─────────── */}
+      <SectionDivider label="Servicios" mark="§ 03" />
+
       {/* ─────────── SERVICES — editorial index ─────────── */}
       <section
         id="servicios"
         ref={servicesSection.ref}
-        className="px-6 md:px-12 lg:px-20 py-32 md:py-44"
+        className="px-6 md:px-12 lg:px-20 pt-8 pb-32 md:pb-44"
       >
         <div className={`max-w-[1600px] mx-auto ${reveal(servicesSection.visible)}`}>
           <div className="grid grid-cols-12 gap-6 lg:gap-12 mb-20 lg:mb-28">
