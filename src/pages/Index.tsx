@@ -79,6 +79,13 @@ const services = [
   { n: "04", title: "Comunicación visual", desc: "Campañas integrales y consistentes.", tags: ["Campaign", "Ads"] },
 ];
 
+const principles = [
+  { label: "Método", title: "Estrategia", desc: "Antes de diseñar, entendemos. Cada decisión visual nace de un objetivo claro." },
+  { label: "Forma", title: "Diseño", desc: "Composición precisa, tipografía cuidada y atención al último detalle." },
+  { label: "Estructura", title: "Sistema", desc: "Marcas que escalan: piezas consistentes, reglas claras, identidad sólida." },
+  { label: "Resultado", title: "Impacto", desc: "Diseño que comunica, posiciona y mueve la aguja del negocio." },
+];
+
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
   const scrollY = useScrollY();
@@ -305,53 +312,60 @@ const Index = () => {
         </div>
       </section>
 
-      {/* PALABRAS CLAVE PINNED */}
+      {/* PRINCIPIOS — Grilla editorial */}
       <section
         ref={wordsSection.ref}
-        className="relative bg-background border-t border-border"
-        style={{ height: "200vh" }}
+        className="relative bg-background border-t border-border px-6 md:px-12 lg:px-20 py-28 md:py-36"
       >
-        <div className="sticky top-0 h-screen flex flex-col items-center justify-center overflow-hidden">
-          <span className="absolute top-28 left-6 md:left-12 lg:left-20 text-[10px] font-semibold tracking-[0.5em] uppercase text-primary">
-            § 01 · Principios
-          </span>
-          <span className="absolute top-28 right-6 md:right-12 lg:right-20 text-[10px] font-semibold tracking-[0.5em] uppercase text-foreground/50">
-            {String(wordIndex + 1).padStart(2, "0")} / 0{keywords.length}
-          </span>
-
-          <div className="relative w-full flex items-center justify-center">
-            {keywords.map((w, i) => (
-              <h2
-                key={w}
-                className="absolute font-light leading-none tracking-[-0.04em] text-center transition-all duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
-                style={{
-                  fontSize: "clamp(3.5rem, 14vw, 13rem)",
-                  opacity: i === wordIndex ? 1 : 0,
-                  transform: `translate3d(0, ${i === wordIndex ? 0 : i < wordIndex ? -60 : 60}px, 0)`,
-                  color: i === wordIndex ? "hsl(var(--primary))" : "hsl(var(--foreground))",
-                }}
-              >
-                {w}
-              </h2>
-            ))}
-            <h2
-              className="invisible font-light leading-none tracking-[-0.04em]"
-              style={{ fontSize: "clamp(3.5rem, 14vw, 13rem)" }}
-            >
-              Estrategia
-            </h2>
+        <div className="max-w-7xl mx-auto">
+          {/* Encabezado */}
+          <div className="flex items-center justify-between mb-16 md:mb-20">
+            <div className="flex items-center gap-4">
+              <span className="text-[10px] font-semibold tracking-[0.5em] uppercase text-primary">
+                § 01
+              </span>
+              <span className="w-12 h-px bg-primary" />
+              <span className="text-[10px] font-semibold tracking-[0.5em] uppercase text-foreground/60">
+                Principios
+              </span>
+            </div>
+            <span className="hidden sm:inline text-[10px] font-semibold tracking-[0.5em] uppercase text-foreground/40">
+              0{principles.length} valores
+            </span>
           </div>
 
-          <div className="absolute bottom-16 flex gap-3">
-            {keywords.map((_, i) => (
-              <span
-                key={i}
-                className="h-px transition-all duration-500"
-                style={{
-                  width: i === wordIndex ? 48 : 16,
-                  background: i === wordIndex ? "hsl(var(--primary))" : "hsl(var(--border))",
-                }}
-              />
+          {/* Título */}
+          <h2
+            className="max-w-[900px] font-light text-foreground leading-[0.95] tracking-[-0.03em] mb-20 md:mb-28"
+            style={{ fontSize: "clamp(2.25rem, 6vw, 4.75rem)" }}
+          >
+            Cuatro ideas que <span className="text-primary italic">guían</span> cada proyecto.
+          </h2>
+
+          {/* Grilla de principios */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border">
+            {principles.map((p, i) => (
+              <article
+                key={p.title}
+                className="group relative bg-background p-8 md:p-10 flex flex-col min-h-[280px] hover:bg-primary transition-colors duration-500"
+              >
+                <div className="flex items-baseline justify-between mb-10">
+                  <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-primary group-hover:text-primary-foreground transition-colors duration-500">
+                    0{i + 1}
+                  </span>
+                  <span className="text-[9px] font-semibold tracking-[0.4em] uppercase text-foreground/40 group-hover:text-primary-foreground/60 transition-colors duration-500">
+                    {p.label}
+                  </span>
+                </div>
+
+                <h3 className="text-3xl md:text-[2.25rem] font-light leading-[1.05] tracking-[-0.02em] text-foreground group-hover:text-primary-foreground transition-colors duration-500 mb-5">
+                  {p.title}
+                </h3>
+
+                <p className="text-[14px] leading-[1.7] text-muted-foreground group-hover:text-primary-foreground/85 transition-colors duration-500 mt-auto">
+                  {p.desc}
+                </p>
+              </article>
             ))}
           </div>
         </div>
