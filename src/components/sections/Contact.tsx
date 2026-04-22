@@ -5,11 +5,12 @@ import { useScrollReveal, reveal, stagger } from "@/hooks/useScrollReveal";
 const Contact = () => {
   const section = useScrollReveal(50);
   const [formSent, setFormSent] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const data = new FormData(e.target as HTMLFormElement);
-    window.location.href = `mailto:hola@berrygraphics.com?subject=Consulta de ${encodeURIComponent(
+    window.location.href = `mailto:hola@berrygraphic.com.ar?subject=Consulta de ${encodeURIComponent(
       data.get("nombre") as string
     )}&body=${encodeURIComponent(
       `Nombre: ${data.get("nombre")}\nEmail: ${data.get("email")}\n\nMensaje:\n${data.get("mensaje")}`
@@ -79,17 +80,23 @@ const Contact = () => {
 
             {/* Contact links */}
             <div className="mt-14 space-y-6">
-              <a
-                href="mailto:hola@berrygraphics.com"
-                className="group flex items-center gap-4 text-[13px] text-foreground hover:text-primary transition-colors duration-300"
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  navigator.clipboard.writeText("hola@berrygraphic.com.ar");
+                  setEmailCopied(true);
+                  setTimeout(() => setEmailCopied(false), 2000);
+                }}
+                className="group flex items-center gap-4 text-[13px] text-foreground hover:text-primary transition-colors duration-300 cursor-pointer w-full text-left"
               >
-                <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300">
+                <div className="shrink-0 w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300">
                   <Mail className="w-4 h-4 text-primary/60" />
                 </div>
-                hola@berrygraphics.com
-              </a>
+                {emailCopied ? "¡Copiado al portapapeles!" : "hola@berrygraphic.com.ar"}
+              </button>
               <a
-                href="https://instagram.com/berrygraphics"
+                href="https://www.instagram.com/berrygraphic/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex items-center gap-4 text-[13px] text-foreground hover:text-primary transition-colors duration-300"
@@ -97,7 +104,7 @@ const Contact = () => {
                 <div className="w-10 h-10 border border-border flex items-center justify-center group-hover:border-primary/30 transition-colors duration-300">
                   <Instagram className="w-4 h-4 text-primary/60" />
                 </div>
-                @berrygraphics
+                @berrygraphic
               </a>
             </div>
           </div>

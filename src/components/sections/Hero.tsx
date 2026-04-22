@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
-import berryLogo from "@/assets/berry-logo.webp";
 
 const Hero = () => {
   const [loaded, setLoaded] = useState(false);
@@ -25,11 +24,11 @@ const Hero = () => {
         className={`absolute top-0 left-0 right-0 px-6 md:px-16 lg:px-24 py-8 flex items-center justify-between z-20 ${fade(0).className}`}
       >
         <div className="flex items-center gap-3">
-          <img src={berryLogo} alt="Berry Graphics" className="w-8 h-8 object-contain" />
+          <img src="/Berrylogo.svg" alt="Berry Graphic" className="w-8 h-8 object-contain" />
           <div className="flex items-baseline gap-1.5">
             <span className="text-[14px] font-semibold text-primary">Berry</span>
             <span className="text-[8px] font-normal tracking-[0.45em] uppercase text-muted-foreground">
-              Graphics
+              Graphic
             </span>
           </div>
         </div>
@@ -149,8 +148,8 @@ const Hero = () => {
 
           {/* Logo */}
           <img
-            src={berryLogo}
-            alt="Berry Graphics"
+            src="/Berrylogo.svg"
+            alt="Berry Graphic"
             className="relative z-10 w-40 h-40 sm:w-52 sm:h-52 lg:w-60 lg:h-60 object-contain"
           />
         </div>

@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import berryLogo from "@/assets/berry-logo.webp";
 
 /* ─────────────────────────────────────────────────────────
-   Berry Graphics — Versión E
+   Berry Graphic — Versión E
    Hero legible · Scroll suave y visible · Sin portfolio
    ───────────────────────────────────────────────────────── */
 
@@ -88,6 +87,7 @@ const principles = [
 
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
+  const [emailCopied, setEmailCopied] = useState(false);
   const scrollY = useScrollY();
 
   const heroSection = useSectionProgress();
@@ -148,14 +148,14 @@ const Index = () => {
         <div className="px-6 md:px-12 lg:px-20 flex items-center justify-between">
           <a href="#" className="flex items-center gap-3">
             <img
-              src={berryLogo}
-              alt="Berry Graphics"
+              src="/Berrylogo.svg"
+              alt="Berry Graphic"
               className={`object-contain transition-all duration-700 ${
                 headerActive ? "w-7 h-7 opacity-100" : "w-0 h-0 opacity-0"
               }`}
             />
             <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-foreground/70">
-              Berry Graphics
+              Berry Graphic
             </span>
           </a>
           <nav className="hidden md:flex items-center gap-10">
@@ -173,12 +173,16 @@ const Index = () => {
               </a>
             ))}
           </nav>
-          <a
-            href="mailto:hola@berrygrafic.com"
-            className="text-[10px] font-semibold tracking-[0.4em] uppercase text-foreground/70 hover:text-primary transition-colors duration-500"
+          <button
+            onClick={() => {
+              navigator.clipboard.writeText("hola@berrygraphic.com.ar");
+              setEmailCopied(true);
+              setTimeout(() => setEmailCopied(false), 2000);
+            }}
+            className="text-[10px] font-semibold tracking-[0.4em] uppercase text-foreground/70 hover:text-primary transition-colors duration-500 cursor-pointer"
           >
-            Escribinos
-          </a>
+            {emailCopied ? "¡Copiado!" : "Escribinos"}
+          </button>
         </div>
         <div
           className="absolute bottom-0 left-0 h-px bg-primary"
@@ -191,7 +195,7 @@ const Index = () => {
         ref={heroSection.ref}
         className="relative"
         style={{ height: "115vh" }}
-        aria-label="Berry Graphics — Diseño en comunicación visual y social media marketing"
+        aria-label="Berry Graphic — Diseño en comunicación visual y social media marketing"
       >
         <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
           {/* Letras decorativas BG */}
@@ -243,8 +247,8 @@ const Index = () => {
           >
             {/* Logo arriba del texto, con micro float */}
             <img
-              src={berryLogo}
-              alt="Berry Graphics diseño gráfico y social media marketing"
+              src="/Berrylogo.svg"
+              alt="Berry Graphic diseño gráfico y social media marketing"
               className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] lg:w-[150px] lg:h-[150px] object-contain mb-5 lg:mb-6"
               style={{
                 transform: `translate3d(0, ${logoFloat}px, 0)`,
@@ -269,7 +273,7 @@ const Index = () => {
               {...fade(500)}
               className={`mt-5 text-[12px] sm:text-[13px] font-semibold tracking-[0.5em] uppercase text-muted-foreground ${fade(500).className}`}
             >
-              Berry Graphics · Buenos Aires
+              Berry Graphic · Buenos Aires
             </p>
 
             <div
@@ -517,33 +521,37 @@ const Index = () => {
           </h2>
 
           <div className="grid lg:grid-cols-2 gap-10 lg:gap-16">
-            <a
+            <button
               {...reveal(contactReveal.visible, 300)}
-              href="mailto:hola@berrygrafic.com"
-              className={`group block ${reveal(contactReveal.visible, 300).className}`}
+              onClick={() => {
+                navigator.clipboard.writeText("hola@berrygraphic.com.ar");
+                setEmailCopied(true);
+                setTimeout(() => setEmailCopied(false), 2000);
+              }}
+              className={`group block text-left w-full cursor-pointer ${reveal(contactReveal.visible, 300).className}`}
               aria-label="Contacto de diseño gráfico y marketing digital"
             >
               <span className="block text-[10px] font-semibold tracking-[0.4em] uppercase text-muted-foreground mb-4">
                 Email
               </span>
               <span className="block font-light tracking-[-0.01em] text-foreground group-hover:text-primary border-b border-border group-hover:border-primary pb-3 transition-colors duration-500 text-xl md:text-2xl">
-                hola@berrygrafic.com →
+                {emailCopied ? "¡Copiado!" : "hola@berrygraphic.com.ar →"}
               </span>
-            </a>
+            </button>
 
             <a
               {...reveal(contactReveal.visible, 450)}
-              href="https://instagram.com/berrygrafics"
+              href="https://www.instagram.com/berrygraphic/"
               target="_blank"
               rel="noopener noreferrer"
               className={`group block ${reveal(contactReveal.visible, 450).className}`}
-              aria-label="Ver Instagram de Berry Graphics"
+              aria-label="Ver Instagram de Berry Graphic"
             >
               <span className="block text-[10px] font-semibold tracking-[0.4em] uppercase text-muted-foreground mb-4">
                 Instagram
               </span>
               <span className="block font-light tracking-[-0.01em] text-foreground group-hover:text-primary border-b border-border group-hover:border-primary pb-3 transition-colors duration-500 text-xl md:text-2xl">
-                @berrygrafics →
+                @berrygraphic →
               </span>
             </a>
           </div>
@@ -552,16 +560,22 @@ const Index = () => {
 
       {/* FOOTER */}
       <footer className="border-t border-border">
-        <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-20 py-10 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-muted-foreground/70">
-            Berry Graphics®
+        <div className="max-w-[1600px] mx-auto px-6 md:px-12 lg:px-20 py-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+          <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-muted-foreground/70 text-center sm:text-left flex-1">
+            © Berry Graphic® 2024 - {year}
           </span>
-          <span className="text-[10px] font-normal tracking-[0.4em] uppercase text-muted-foreground/50">
+          <span className="text-[10px] font-normal tracking-[0.4em] uppercase text-muted-foreground/50 text-center flex-1">
             Diseño gráfico profesional para marcas
           </span>
-          <span className="text-[10px] font-semibold tracking-[0.4em] uppercase text-muted-foreground/70">
-            {year}
-          </span>
+          <a
+            href="https://alfaweb.com.ar"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center sm:justify-end gap-2 text-[10px] font-semibold tracking-[0.2em] uppercase text-muted-foreground/70 hover:text-primary transition-colors flex-1"
+          >
+            <img src="/alfaweb.ico" alt="Alfa Web Diseño" className="w-4 h-4 object-contain" />
+            Creado por Alfa Web Diseño
+          </a>
         </div>
       </footer>
 

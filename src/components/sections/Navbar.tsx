@@ -1,5 +1,4 @@
 import { ArrowRight } from "lucide-react";
-import berryLogo from "@/assets/berry-logo.webp";
 
 interface NavbarProps {
   scrolled: boolean;
@@ -14,11 +13,11 @@ const Navbar = ({ scrolled }: NavbarProps) => (
     }`}
   >
     <a href="#" className="flex items-center gap-3">
-      <img src={berryLogo} alt="Berry Graphics" className="w-7 h-7 object-contain" />
+      <img src="/Berrylogo.svg" alt="Berry Graphic" className="w-7 h-7 object-contain" />
       <div className="flex items-baseline gap-1.5">
         <span className="text-xl font-semibold text-primary tracking-tight leading-none">Berry</span>
         <span className="text-[9px] font-normal tracking-[0.4em] uppercase text-muted-foreground leading-none">
-          Graphics
+          Graphic
         </span>
       </div>
     </a>
