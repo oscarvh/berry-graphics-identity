@@ -238,7 +238,7 @@ const Index = () => {
             <img
               src={berryLogo}
               alt="Berry Graphics diseño gráfico y social media marketing"
-              className="w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] lg:w-[200px] lg:h-[200px] object-contain mb-10 lg:mb-14"
+              className="w-[110px] h-[110px] sm:w-[130px] sm:h-[130px] lg:w-[150px] lg:h-[150px] object-contain mb-5 lg:mb-6"
               style={{
                 transform: `translate3d(0, ${logoFloat}px, 0)`,
                 willChange: "transform",
@@ -250,7 +250,7 @@ const Index = () => {
               className={`font-light leading-[0.95] tracking-[-0.03em] text-foreground ${fade(200).className}`}
               style={{
                 ...fade(200).style,
-                fontSize: "clamp(2.5rem, 7vw, 5.5rem)",
+                fontSize: "clamp(2.25rem, 6vw, 4.75rem)",
               }}
             >
               Diseño en{" "}
@@ -260,14 +260,14 @@ const Index = () => {
 
             <p
               {...fade(500)}
-              className={`mt-8 text-[12px] sm:text-[13px] font-semibold tracking-[0.5em] uppercase text-muted-foreground ${fade(500).className}`}
+              className={`mt-5 text-[12px] sm:text-[13px] font-semibold tracking-[0.5em] uppercase text-muted-foreground ${fade(500).className}`}
             >
               Berry Graphics · Buenos Aires
             </p>
 
             <div
               {...fade(800)}
-              className={`mt-10 flex flex-wrap items-center justify-center gap-4 ${fade(800).className}`}
+              className={`mt-6 flex flex-wrap items-center justify-center gap-4 ${fade(800).className}`}
             >
               <a
                 href="#contacto"
