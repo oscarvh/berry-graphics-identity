@@ -208,21 +208,6 @@ const Index = () => {
             </span>
           </div>
 
-          {/* Logo grande centrado, con micro float */}
-          <div
-            className="absolute inset-0 flex items-center justify-center pointer-events-none"
-            style={{
-              transform: `translate3d(0, ${heroLift * 0.6 + logoFloat}px, 0)`,
-              opacity: heroFade,
-              willChange: "transform, opacity",
-            }}
-          >
-            <img
-              src={berryLogo}
-              alt="Berry Graphics diseño gráfico y social media marketing"
-              className="w-[180px] h-[180px] sm:w-[220px] sm:h-[220px] lg:w-[260px] lg:h-[260px] object-contain"
-            />
-          </div>
 
           {/* Kicker arriba */}
           <div
@@ -240,16 +225,26 @@ const Index = () => {
             </span>
           </div>
 
-          {/* Bloque principal de texto — debajo del logo */}
+          {/* Bloque principal: logo arriba + texto debajo */}
           <div
-            className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-12 lg:px-20 text-center"
+            className="relative z-10 w-full max-w-5xl mx-auto px-6 md:px-12 lg:px-20 text-center flex flex-col items-center"
             style={{
               transform: `translate3d(0, ${heroLift}px, 0)`,
               opacity: heroFade,
               willChange: "transform, opacity",
-              marginTop: "320px",
             }}
           >
+            {/* Logo arriba del texto, con micro float */}
+            <img
+              src={berryLogo}
+              alt="Berry Graphics diseño gráfico y social media marketing"
+              className="w-[140px] h-[140px] sm:w-[170px] sm:h-[170px] lg:w-[200px] lg:h-[200px] object-contain mb-10 lg:mb-14"
+              style={{
+                transform: `translate3d(0, ${logoFloat}px, 0)`,
+                willChange: "transform",
+              }}
+            />
+
             <h1
               {...fade(200)}
               className={`font-light leading-[0.95] tracking-[-0.03em] text-foreground ${fade(200).className}`}
