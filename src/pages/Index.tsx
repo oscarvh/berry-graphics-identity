@@ -79,6 +79,13 @@ const services = [
   { n: "04", title: "Comunicación visual", desc: "Campañas integrales y consistentes.", tags: ["Campaign", "Ads"] },
 ];
 
+const principles = [
+  { label: "Método", title: "Estrategia", desc: "Antes de diseñar, entendemos. Cada decisión visual nace de un objetivo claro." },
+  { label: "Forma", title: "Diseño", desc: "Composición precisa, tipografía cuidada y atención al último detalle." },
+  { label: "Estructura", title: "Sistema", desc: "Marcas que escalan: piezas consistentes, reglas claras, identidad sólida." },
+  { label: "Resultado", title: "Impacto", desc: "Diseño que comunica, posiciona y mueve la aguja del negocio." },
+];
+
 const Index = () => {
   const [loaded, setLoaded] = useState(false);
   const scrollY = useScrollY();
