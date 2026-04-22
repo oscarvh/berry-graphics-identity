@@ -183,7 +183,7 @@ const Index = () => {
       <section
         ref={heroSection.ref}
         className="relative"
-        style={{ height: "150vh" }}
+        style={{ height: "115vh" }}
         aria-label="Berry Graphics — Diseño en comunicación visual y social media marketing"
       >
         <div className="sticky top-0 h-screen flex items-center justify-center overflow-hidden">
